@@ -16,7 +16,7 @@ export function HomeView({ project, onNavigate }: { project: NovelProject; onNav
             <button className="ghost-button" onClick={() => onNavigate('learning')}>整理学习笔记 <ArrowRight size={15} /></button>
           </div>
         </div>
-        <div className="personal-seal"><span>FTZ</span><small>记录 · 学习 · 创作</small></div>
+        <div className="personal-seal"><span>KK</span><small>记录 · 学习 · 创作</small></div>
       </section>
 
       <section className="personal-module-grid">

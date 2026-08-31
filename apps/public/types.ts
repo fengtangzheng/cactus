@@ -23,6 +23,7 @@ export interface PublicChapter {
 export interface PublicSnapshot {
   siteTitle: string
   profile: {
+    name: string
     handle: string
     tagline: string
     introduction: string

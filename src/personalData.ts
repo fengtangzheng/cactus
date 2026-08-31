@@ -17,8 +17,9 @@ export interface PersonalProject {
 }
 
 export const profile = {
-  name: '冯唐正',
-  handle: 'fengtangzheng',
+  brand: 'Cactus',
+  name: 'KK',
+  handle: 'keepkeen',
   tagline: '在技术、创作与生活之间持续记录。',
   introduction: '这里收集我正在学习的事、做过的项目、偶尔成形的想法，以及还在生长中的故事。',
 }

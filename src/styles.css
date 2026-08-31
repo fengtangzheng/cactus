@@ -332,7 +332,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .public-hero button { height: 40px; padding: 0 18px; border: 0; border-radius: 2px; background: #3f5141; color: #fff; display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 10px; }
 .public-hero > div span { color: #8e877e; font-size: 8px; }
 .personal-preview-hero { background: radial-gradient(circle at 78% 43%, rgba(95,114,95,.28), transparent 7%), radial-gradient(circle at 78% 43%, transparent 0 12%, rgba(72,87,72,.12) 12.2% 12.5%, transparent 12.7% 18%, rgba(72,87,72,.08) 18.2% 18.5%, transparent 18.7%), linear-gradient(115deg, #efebe2 0 62%, #c4cec2 62%); }
-.personal-preview-hero::after { content: '正'; }
+.personal-preview-hero::after { content: 'K'; }
 .preview-fiction { min-height: 390px; padding: 70px 8vw; background: #30332e; color: #f5f1e8; display: flex; align-items: center; justify-content: space-between; overflow: hidden; }
 .preview-fiction > div { max-width: 650px; }
 .preview-fiction h2 { margin: 12px 0 9px; font-family: var(--serif); font-size: 38px; letter-spacing: .08em; }

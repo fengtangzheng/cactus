@@ -23,7 +23,7 @@ export function PublicSite({ snapshot }: { snapshot: PublicSnapshot }) {
         <section className="reader-hero" id="home">
           <div className="hero-copy">
             <span className="kicker">PERSONAL HOME · @{profile.handle}</span>
-            <h1>{siteTitle}</h1>
+            <h1>{profile.name}</h1>
             <p className="subtitle">{profile.tagline}</p>
             <p className="synopsis">{profile.introduction}</p>
             <div className="hero-actions">
@@ -80,7 +80,7 @@ export function PublicSite({ snapshot }: { snapshot: PublicSnapshot }) {
         <section className="about-section" id="about">
           <Users size={24} />
           <span className="kicker">ABOUT THE AUTHOR</span>
-          <h2>{siteTitle}</h2>
+          <h2>{profile.name}</h2>
           <p>持续记录、持续学习，也持续创作。这里不是一份完成的简历，而是一个正在生长的个人空间。</p>
         </section>
       </main>

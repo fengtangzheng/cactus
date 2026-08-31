@@ -51,7 +51,7 @@ export function Sidebar({ active, onChange, onPreview }: SidebarProps) {
         <span className="project-glyph">冯</span>
         <span>
           <small>个人空间</small>
-          <strong>冯唐正的主页</strong>
+          <strong>KK 的空间</strong>
         </span>
         <Settings2 size={15} />
       </div>

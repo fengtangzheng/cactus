@@ -9,8 +9,9 @@ export function createPublicSnapshot(project: NovelProject) {
   )
 
   return {
-    siteTitle: profile.name,
+    siteTitle: profile.brand,
     profile: {
+      name: profile.name,
       handle: profile.handle,
       tagline: profile.tagline,
       introduction: profile.introduction,
