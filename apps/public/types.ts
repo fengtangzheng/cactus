@@ -22,6 +22,33 @@ export interface PublicChapter {
 
 export interface PublicSnapshot {
   siteTitle: string
+  profile: {
+    handle: string
+    tagline: string
+    introduction: string
+  }
+  notes: Array<{
+    id: string
+    title: string
+    excerpt: string
+    category: string
+    date: string
+  }>
+  learning: Array<{
+    id: string
+    title: string
+    excerpt: string
+    category: string
+    date: string
+  }>
+  projects: Array<{
+    id: string
+    title: string
+    summary: string
+    kind: string
+    status: string
+    accent: string
+  }>
   work: {
     title: string
     subtitle: string

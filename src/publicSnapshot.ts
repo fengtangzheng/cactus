@@ -1,4 +1,5 @@
 import type { NovelProject } from './types'
+import { learning, notes, profile, projects } from './personalData'
 
 export function createPublicSnapshot(project: NovelProject) {
   const publicCharacterIds = new Set(
@@ -8,7 +9,19 @@ export function createPublicSnapshot(project: NovelProject) {
   )
 
   return {
-    siteTitle: project.penName,
+    siteTitle: profile.name,
+    profile: {
+      handle: profile.handle,
+      tagline: profile.tagline,
+      introduction: profile.introduction,
+    },
+    notes: notes
+      .filter((entry) => entry.status === 'published')
+      .map(({ id, title, excerpt, category, date }) => ({ id, title, excerpt, category, date })),
+    learning: learning
+      .filter((entry) => entry.status === 'published')
+      .map(({ id, title, excerpt, category, date }) => ({ id, title, excerpt, category, date })),
+    projects: projects.map(({ id, title, summary, kind, status, accent }) => ({ id, title, summary, kind, status, accent })),
     work: {
       title: project.title,
       subtitle: project.subtitle,

@@ -1,38 +1,45 @@
-import { ArrowLeft, BookOpen, MapPin, Users } from 'lucide-react'
+import { ArrowLeft, BookOpen, FolderKanban, GraduationCap, NotebookPen, Users } from 'lucide-react'
+import { learning, notes, profile, projects } from '../personalData'
 import type { NovelProject } from '../types'
 
 export function PublicPreview({ project, onClose }: { project: NovelProject; onClose: () => void }) {
-  const publicCharacters = project.characters.filter((character) => character.visibility === 'public')
-  const publicSettings = project.settings.filter((setting) => setting.visibility === 'public')
-
   return (
-    <div className="public-site">
+    <div className="public-site personal-public-preview">
       <nav className="public-nav">
-        <button onClick={onClose}><ArrowLeft size={15} /> 返回创作区</button>
-        <strong>{project.penName}</strong>
-        <div><a href="#works">作品</a><a href="#world">世界</a><a href="#characters">人物</a><a href="#about">关于</a></div>
+        <button onClick={onClose}><ArrowLeft size={15} /> 返回工作台</button>
+        <strong>{profile.name}</strong>
+        <div><a href="#notes">记录</a><a href="#learning">学习</a><a href="#projects">项目</a><a href="#creation">创作</a></div>
       </nav>
       <main>
-        <section className="public-hero">
-          <span className="public-kicker">A NOVEL IN PROGRESS · 连载中</span>
-          <h1>{project.title}</h1>
-          <p className="public-subtitle">{project.subtitle}</p>
-          <p className="public-synopsis">{project.synopsis}</p>
-          <div><button><BookOpen size={16} /> 从第一章开始</button><span>已完成 {project.chapters.reduce((sum, chapter) => sum + chapter.wordCount, 0).toLocaleString()} 字</span></div>
+        <section className="public-hero personal-preview-hero">
+          <span className="public-kicker">PERSONAL HOME · @{profile.handle}</span>
+          <h1>{profile.name}</h1>
+          <p className="public-subtitle">{profile.tagline}</p>
+          <p className="public-synopsis">{profile.introduction}</p>
+          <div><button><NotebookPen size={16} /> 看看最近记录</button><span>记录 · 学习 · 项目 · 创作</span></div>
         </section>
-        <section className="public-section" id="world">
-          <span className="public-kicker">THE WORLD</span><h2>进入雾城</h2>
-          <div className="public-setting-grid">
-            {publicSettings.map((setting) => <article key={setting.id}><MapPin size={17} /><small>{setting.category}</small><h3>{setting.title}</h3><p>{setting.summary}</p></article>)}
-          </div>
+
+        <section className="public-section" id="notes">
+          <span className="public-kicker">NOTES & JOURNAL</span><h2>最近记录</h2>
+          <div className="public-setting-grid">{notes.filter((note) => note.status === 'published').map((note) => <article key={note.id}><NotebookPen size={17} /><small>{note.category} · {note.date}</small><h3>{note.title}</h3><p>{note.excerpt}</p></article>)}</div>
         </section>
-        <section className="public-section character-section" id="characters">
-          <span className="public-kicker">DRAMATIS PERSONAE</span><h2>故事中的人</h2>
-          <div className="public-character-grid">
-            {publicCharacters.map((character) => <article key={character.id}><span style={{ '--character-color': character.color } as React.CSSProperties}>{character.name.slice(0, 1)}</span><div><small>{character.role}</small><h3>{character.name}</h3><p>{character.motivation}</p></div></article>)}
-          </div>
+
+        <section className="public-section character-section" id="learning">
+          <span className="public-kicker">LEARNING LOG</span><h2>最近在学</h2>
+          <div className="public-character-grid">{learning.filter((entry) => entry.status === 'published').map((entry) => <article key={entry.id}><span style={{ '--character-color': '#6d7d6c' } as React.CSSProperties}><GraduationCap size={20} /></span><div><small>{entry.category}</small><h3>{entry.title}</h3><p>{entry.excerpt}</p></div></article>)}</div>
         </section>
-        <section className="public-about" id="about"><Users size={23} /><span className="public-kicker">ABOUT THE AUTHOR</span><h2>{project.penName}</h2><p>持续写作，也持续修改。这个站点记录故事抵达读者之前的最后一段路。</p></section>
+
+        <section className="public-section" id="projects">
+          <span className="public-kicker">PROJECTS</span><h2>正在做的项目</h2>
+          <div className="public-setting-grid">{projects.map((item) => <article key={item.id}><FolderKanban size={17} /><small>{item.kind} · {item.status}</small><h3>{item.title}</h3><p>{item.summary}</p></article>)}</div>
+        </section>
+
+        <section className="preview-fiction" id="creation">
+          <div><span className="public-kicker">FICTION IN PROGRESS</span><h2>{project.title}</h2><p>{project.subtitle}</p><small>{project.synopsis}</small><button><BookOpen size={16} /> 查看创作进度</button></div>
+          <span className="preview-fiction-mark">雾</span>
+        </section>
+
+        <section className="public-about"><Users size={23} /><span className="public-kicker">ABOUT</span><h2>{profile.name}</h2><p>持续记录、持续学习，也持续创作。这里不是一份完成的简历，而是一个正在生长的个人空间。</p></section>
       </main>
     </div>
   )
