@@ -1,0 +1,29 @@
+{
+  "name": "cactus-novel-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
+    "preview": "vite preview",
+    "public:dev": "vite --config apps/public/vite.config.ts",
+    "public:build": "tsc --noEmit -p apps/public/tsconfig.json && vite build --config apps/public/vite.config.ts",
+    "public:preview": "vite preview --config apps/public/vite.config.ts",
+    "public:verify": "node scripts/verify-public-build.mjs"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.8.5",
+    "lucide-react": "^0.542.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "siteTitle": "未署名的写作者",
+  "work": {
+    "title": "雾都来信",
+    "subtitle": "一座城市忘记名字之前，所有人都收到了一封信。",
+    "synopsis": "永昼历九十七年，送信人林雾在一封没有收件人的信里，看见了自己失踪七年的名字。她沿着废弃的邮路进入北塔，也一步步走进这座城市被人为抹去的记忆。",
+    "status": "连载中",
+    "wordCount": 9735,
+    "settings": [
+      {
+        "id": "setting-fog-city",
+        "category": "世界",
+        "title": "雾城",
+        "summary": "一座依赖记忆燃料维持永昼的环形城市。"
+      },
+      {
+        "id": "setting-post-road",
+        "category": "地点",
+        "title": "旧邮路",
+        "summary": "地图上已经消失、只有送信人记得的地下道路。"
+      }
+    ],
+    "characters": [
+      {
+        "id": "lin-wu",
+        "name": "林雾",
+        "role": "主角 · 送信人",
+        "motivation": "找到失踪的姐姐，并证明一个人不会因为无人记得就从未存在。",
+        "color": "#54705f"
+      },
+      {
+        "id": "shen-lan",
+        "name": "沈岚",
+        "role": "关键角色 · 档案员",
+        "motivation": "让雾城继续运转，直到找到不再牺牲记忆的方法。",
+        "color": "#7d6b5b"
+      },
+      {
+        "id": "yu-qi",
+        "name": "余七",
+        "role": "同伴 · 地图贩子",
+        "motivation": "画出一张不会被记忆改变的地图。",
+        "color": "#af6a4a"
+      }
+    ],
+    "chapters": [
+      {
+        "id": "ch-1",
+        "title": "第一章：没有收件人的信",
+        "excerpt": "凌晨四点十七分，旧邮局的黄铜投递口响了一声。",
+        "published": true
+      }
+    ]
+  }
+}
