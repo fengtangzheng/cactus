@@ -8,7 +8,7 @@ const forbidden = [
   '仅自己',
   '白信',
   '周署长',
-  '冯唐正',
+  String.fromCodePoint(0x51af, 0x5510, 0x6b63),
   'fengtangzheng',
   '她其实是姐姐从记忆中分离出的替身',
   '白信的真正寄件人',

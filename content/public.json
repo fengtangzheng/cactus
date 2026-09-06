@@ -1,104 +1,210 @@
 {
   "siteTitle": "Cactus",
   "profile": {
-    "name": "KK",
+    "brand": "Cactus / 掌仙人",
+    "name": "祁珞",
+    "englishName": "Kiro",
+    "alias": "KK / 卡卡",
     "handle": "keepkeen",
-    "tagline": "在技术、创作与生活之间持续记录。",
-    "introduction": "这里收集我正在学习的事、做过的项目、偶尔成形的想法，以及还在生长中的故事。"
+    "tagline": "Keep Keen — 保持敏锐，也保持热忱。",
+    "introduction": "一个整理记录、随笔与虚构世界的个人空间。这里的一切由虚拟身份祁珞讲述。"
   },
-  "notes": [
+  "gallery": [
     {
-      "id": "note-personal-site",
+      "id": "kk-hero",
+      "type": "image",
+      "title": "Kiro 标准半身像",
+      "caption": "新版首页主视觉，突出灰眸与蓝灰发尾。",
+      "tags": ["Kiro", "半身", "Hero", "v1.1"],
+      "role": "cover",
+      "url": "/media/kk/hero-1200.webp?v=1.1"
+    },
+    {
+      "id": "kk-portrait",
+      "type": "image",
+      "title": "Kiro 全身档案照",
+      "caption": "新版全身造型与服装比例档案。",
+      "tags": ["Kiro", "全身", "档案", "v1.1"],
+      "role": "gallery",
+      "url": "/media/kk/portrait-960.webp?v=1.1"
+    },
+    {
+      "id": "kk-face",
+      "type": "image",
+      "title": "Kiro 标准脸部特写",
+      "caption": "新版人物特写、关系图头像与标签页图标来源。",
+      "tags": ["Kiro", "特写", "头像", "v1.1"],
+      "role": "graph-avatar",
+      "url": "/media/kk/face-800.webp?v=1.1"
+    },
+    {
+      "id": "kk-turnaround",
+      "type": "image",
+      "title": "Kiro 四视图设定稿",
+      "caption": "正面、左侧、背面与右侧的体态、发型及服装设定。",
+      "tags": ["Kiro", "四视图", "设定稿", "v1.1"],
+      "role": "gallery",
+      "url": "/media/kk/turnaround-1800.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-01", "type": "image", "title": "春季校园基础装", "caption": "Kiro 的「春季校园基础装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "春季", "校园"], "role": "gallery", "url": "/media/kk/life/01.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-02", "type": "image", "title": "图书馆阅读装", "caption": "Kiro 的「图书馆阅读装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "图书馆", "阅读"], "role": "gallery", "url": "/media/kk/life/02.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-03", "type": "image", "title": "泳后日常装", "caption": "Kiro 的「泳后日常装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "泳后", "日常"], "role": "gallery", "url": "/media/kk/life/03.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-04", "type": "image", "title": "AI 实验室装", "caption": "Kiro 的「AI 实验室装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "AI 实验室", "科技"], "role": "gallery", "url": "/media/kk/life/04.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-05", "type": "image", "title": "雨天街道装", "caption": "Kiro 的「雨天街道装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "雨天", "街道"], "role": "gallery", "url": "/media/kk/life/05.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-06", "type": "image", "title": "雪天图书馆装", "caption": "Kiro 的「雪天图书馆装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冬季", "雪天", "图书馆"], "role": "gallery", "url": "/media/kk/life/06.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-07", "type": "image", "title": "深炭灰高领 + 冷灰蓝背心裙", "caption": "Kiro 的「深炭灰高领 + 冷灰蓝背心裙」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冷色穿搭", "背心裙"], "role": "gallery", "url": "/media/kk/life/07.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-08", "type": "image", "title": "墨灰半高领 + 黑色短西装", "caption": "Kiro 的「墨灰半高领 + 黑色短西装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冷色穿搭", "通勤"], "role": "gallery", "url": "/media/kk/life/08.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-09", "type": "image", "title": "石墨灰圆领 + 冷灰蓝衬衫外搭", "caption": "Kiro 的「石墨灰圆领 + 冷灰蓝衬衫外搭」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冷色穿搭", "叠穿"], "role": "gallery", "url": "/media/kk/life/09.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-10", "type": "image", "title": "黑色极简衬衫连衣裙", "caption": "Kiro 的「黑色极简衬衫连衣裙」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "极简", "连衣裙"], "role": "gallery", "url": "/media/kk/life/10.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-11", "type": "image", "title": "夏日湖边海边旅行装", "caption": "Kiro 的「夏日湖边海边旅行装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "旅行", "湖边", "海边"], "role": "gallery", "url": "/media/kk/life/11.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-12", "type": "image", "title": "夏夜写作装", "caption": "Kiro 的「夏夜写作装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "夜晚", "写作"], "role": "gallery", "url": "/media/kk/life/12.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-13", "type": "image", "title": "AI 实验室变体装", "caption": "Kiro 的「AI 实验室变体装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "AI 实验室", "科技", "变体"], "role": "gallery", "url": "/media/kk/life/13.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-14", "type": "image", "title": "雨天街道变体装", "caption": "Kiro 的「雨天街道变体装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "雨天", "街道", "变体"], "role": "gallery", "url": "/media/kk/life/14.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-15", "type": "image", "title": "古城历史旅行装", "caption": "Kiro 的「古城历史旅行装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "旅行", "古城", "历史"], "role": "gallery", "url": "/media/kk/life/15.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-16", "type": "image", "title": "秋日校园阅读装", "caption": "Kiro 的「秋日校园阅读装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "秋季", "校园", "阅读"], "role": "gallery", "url": "/media/kk/life/16.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-17", "type": "image", "title": "雪天图书馆变体装", "caption": "Kiro 的「雪天图书馆变体装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冬季", "雪天", "图书馆", "变体"], "role": "gallery", "url": "/media/kk/life/17.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-18", "type": "image", "title": "冬日通学装", "caption": "Kiro 的「冬日通学装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冬季", "通学"], "role": "gallery", "url": "/media/kk/life/18.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-19", "type": "image", "title": "冬夜写作装", "caption": "Kiro 的「冬夜写作装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冬季", "夜晚", "写作"], "role": "gallery", "url": "/media/kk/life/19.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-20", "type": "image", "title": "冬季城市旅行装", "caption": "Kiro 的「冬季城市旅行装」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冬季", "城市", "旅行"], "role": "gallery", "url": "/media/kk/life/20.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-21", "type": "image", "title": "米白衬衫 + 黑色吊带连衣裙", "caption": "Kiro 的「米白衬衫 + 黑色吊带连衣裙」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "叠穿", "连衣裙"], "role": "gallery", "url": "/media/kk/life/21.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-22", "type": "image", "title": "深炭灰短袖 T + 黑色百慕大短裤", "caption": "Kiro 的「深炭灰短袖 T + 黑色百慕大短裤」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "短袖", "日常"], "role": "gallery", "url": "/media/kk/life/22.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-23", "type": "image", "title": "黑色无袖背心 + 马面裙", "caption": "Kiro 的「黑色无袖背心 + 马面裙」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "无袖", "马面裙", "新中式", "黑色穿搭"], "role": "gallery", "url": "/media/kk/life/23.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-24", "type": "image", "title": "白色无袖背心 + 马面裙", "caption": "Kiro 的「白色无袖背心 + 马面裙」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "无袖", "马面裙", "新中式", "白色穿搭"], "role": "gallery", "url": "/media/kk/life/24.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-25", "type": "image", "title": "黑色无袖 + 工装裤", "caption": "Kiro 的「黑色无袖 + 工装裤」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "无袖", "工装", "日常", "黑色穿搭"], "role": "gallery", "url": "/media/kk/life/25.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-26", "type": "image", "title": "黑色棒球帽运动日常", "caption": "Kiro 的「黑色棒球帽运动日常」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "运动", "日常", "棒球帽", "黑色穿搭"], "role": "gallery", "url": "/media/kk/life/26.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-27", "type": "image", "title": "雾蓝灰棒球帽湖边旅行", "caption": "Kiro 的「雾蓝灰棒球帽湖边旅行」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "夏季", "旅行", "湖边", "棒球帽", "冷色穿搭"], "role": "gallery", "url": "/media/kk/life/27.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-28", "type": "image", "title": "深炭灰针织帽冬日通学", "caption": "Kiro 的「深炭灰针织帽冬日通学」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "冬季", "通学", "针织帽", "冷色穿搭"], "role": "gallery", "url": "/media/kk/life/28.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-29", "type": "image", "title": "冷灰渔夫帽历史旅行", "caption": "Kiro 的「冷灰渔夫帽历史旅行」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "旅行", "历史", "渔夫帽", "冷色穿搭"], "role": "gallery", "url": "/media/kk/life/29.webp?v=1.1"
+    },
+    {
+      "id": "kk-life-30", "type": "image", "title": "黑色贝雷帽博物馆阅读", "caption": "Kiro 的「黑色贝雷帽博物馆阅读」生活穿搭记录。",
+      "tags": ["Kiro", "生活穿搭", "v1.1", "博物馆", "阅读", "贝雷帽", "黑色穿搭"], "role": "gallery", "url": "/media/kk/life/30.webp?v=1.1"
+    }
+  ],
+  "essays": [
+    {
+      "id": "essay-personal-site",
+      "slug": "a-home-that-keeps-growing",
       "title": "把个人网站重新当作一个长期项目",
       "excerpt": "主页不是一次性交付物，而是一个持续生长的入口。先把真正会长期使用的内容放进来。",
-      "category": "随手记",
+      "content": "主页不是一次性交付物，而是一个持续生长的入口。\n\n我希望 Cactus 既能安放已经想清楚的内容，也能保留仍在形成中的痕迹。公开阅读与私密创作并不冲突，只要边界是在数据层真正建立起来的。",
+      "category": "随笔",
+      "tags": ["个人网站", "长期主义"],
       "date": "2026.08.31"
     }
   ],
-  "learning": [
+  "novels": [
     {
-      "id": "learning-design-system",
-      "title": "设计系统：先写下不可违反的原则",
-      "excerpt": "颜色、字体和圆角只是表层，稳定的视觉判断来自一组明确的约束。",
-      "category": "设计 × AI",
-      "date": "学习中"
-    },
-    {
-      "id": "learning-graph-data",
-      "title": "关系图不只是画布，而是结构化数据",
-      "excerpt": "当节点和关系可以被查询、引用和校验时，图才真正参与创作。",
-      "category": "产品 × 工程",
-      "date": "已整理"
+      "id": "fog-letters",
+      "slug": "fog-letters",
+      "title": "雾都来信",
+      "subtitle": "一座城市忘记名字之前，所有人都收到了一封信。",
+      "synopsis": "永昼历九十七年，送信人林雾在一封没有收件人的信里，看见了自己失踪七年的名字。",
+      "status": "drafting",
+      "wordCount": 9735,
+      "settings": [
+        { "id": "setting-fog-city", "category": "世界", "title": "雾城", "summary": "一座依赖记忆燃料维持永昼的环形城市。" },
+        { "id": "setting-post-road", "category": "地点", "title": "旧邮路", "summary": "地图上已经消失、只有送信人记得的地下道路。" }
+      ],
+      "characters": [
+        { "id": "lin-wu", "name": "林雾", "role": "主角 · 送信人", "motivation": "找到失踪的姐姐，并证明一个人不会因为无人记得就从未存在。", "color": "#54705f", "media": [] },
+        { "id": "shen-lan", "name": "沈岚", "role": "关键角色 · 档案员", "motivation": "让雾城继续运转，直到找到不再牺牲记忆的方法。", "color": "#7d6b5b", "media": [] },
+        { "id": "yu-qi", "name": "余七", "role": "同伴 · 地图贩子", "motivation": "画出一张不会被记忆改变的地图。", "color": "#af6a4a", "media": [] }
+      ],
+      "relationships": [
+        { "id": "rel-lin-shen", "sourceId": "lin-wu", "targetId": "shen-lan", "label": "互相试探", "tone": "neutral" },
+        { "id": "rel-lin-yu", "sourceId": "lin-wu", "targetId": "yu-qi", "label": "旅伴", "tone": "positive" }
+      ],
+      "chapters": [
+        { "id": "ch-1", "slug": "ch-1", "title": "第一章：没有收件人的信", "excerpt": "凌晨四点十七分，旧邮局的黄铜投递口响了一声。", "content": "凌晨四点十七分，旧邮局的黄铜投递口响了一声。" }
+      ]
     }
   ],
-  "projects": [
-    {
-      "id": "project-cactus",
-      "title": "Cactus",
-      "summary": "本地优先的个人内容工作台，以及与之配套的公开主页。",
-      "kind": "个人网站",
-      "status": "持续构建",
-      "accent": "#5d745f"
-    },
-    {
-      "id": "project-learning-log",
-      "title": "学习档案",
-      "summary": "把零散阅读、实验和技术调查整理成可复用的知识。",
-      "kind": "知识整理",
-      "status": "长期更新",
-      "accent": "#a36c4f"
-    }
-  ],
-  "work": {
-    "title": "雾都来信",
-    "subtitle": "一座城市忘记名字之前，所有人都收到了一封信。",
-    "synopsis": "永昼历九十七年，送信人林雾在一封没有收件人的信里，看见了自己失踪七年的名字。她沿着废弃的邮路进入北塔，也一步步走进这座城市被人为抹去的记忆。",
-    "status": "连载中",
-    "wordCount": 9735,
-    "settings": [
-      {
-        "id": "setting-fog-city",
-        "category": "世界",
-        "title": "雾城",
-        "summary": "一座依赖记忆燃料维持永昼的环形城市。"
-      },
-      {
-        "id": "setting-post-road",
-        "category": "地点",
-        "title": "旧邮路",
-        "summary": "地图上已经消失、只有送信人记得的地下道路。"
-      }
-    ],
-    "characters": [
-      {
-        "id": "lin-wu",
-        "name": "林雾",
-        "role": "主角 · 送信人",
-        "motivation": "找到失踪的姐姐，并证明一个人不会因为无人记得就从未存在。",
-        "color": "#54705f"
-      },
-      {
-        "id": "shen-lan",
-        "name": "沈岚",
-        "role": "关键角色 · 档案员",
-        "motivation": "让雾城继续运转，直到找到不再牺牲记忆的方法。",
-        "color": "#7d6b5b"
-      },
-      {
-        "id": "yu-qi",
-        "name": "余七",
-        "role": "同伴 · 地图贩子",
-        "motivation": "画出一张不会被记忆改变的地图。",
-        "color": "#af6a4a"
-      }
-    ],
-    "chapters": [
-      {
-        "id": "ch-1",
-        "title": "第一章：没有收件人的信",
-        "excerpt": "凌晨四点十七分，旧邮局的黄铜投递口响了一声。",
-        "published": true
-      }
-    ]
-  }
+  "stats": { "essays": 1, "novels": 1, "chapters": 1 }
 }

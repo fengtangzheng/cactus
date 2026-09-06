@@ -9,7 +9,7 @@
     "typecheck": "tsc -b --pretty false",
     "preview": "vite preview",
     "public:dev": "vite --config apps/public/vite.config.ts",
-    "public:build": "tsc --noEmit -p apps/public/tsconfig.json && vite build --config apps/public/vite.config.ts",
+    "public:build": "tsc --noEmit -p apps/public/tsconfig.json && vite build --config apps/public/vite.config.ts && node scripts/create-pages-404.mjs",
     "public:preview": "vite preview --config apps/public/vite.config.ts",
     "public:verify": "node scripts/verify-public-build.mjs"
   },
