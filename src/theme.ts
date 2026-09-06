@@ -29,9 +29,9 @@ export function useTheme(storageKey: string) {
   const [choice, setChoice] = useState<ThemeChoice>(() => {
     const saved = window.localStorage.getItem(storageKey)
     if (saved === 'paper') return 'frost'
-    return isThemeChoice(saved) ? saved : 'system'
+    return isThemeChoice(saved) ? saved : 'frost'
   })
-  const [resolved, setResolved] = useState<ResolvedTheme>('gobi')
+  const [resolved, setResolved] = useState<ResolvedTheme>('frost')
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, choice)
