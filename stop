@@ -1,0 +1,23 @@
+#!/bin/zsh
+
+set -euo pipefail
+
+service_label=local.cactus.vite
+service_domain="gui/$(id -u)/${service_label}"
+
+if ! launchctl print "${service_domain}" >/dev/null 2>&1; then
+  print -- "Cactus 当前没有运行。"
+  exit 0
+fi
+
+launchctl remove "${service_label}"
+for _ in {1..30}; do
+  if ! launchctl print "${service_domain}" >/dev/null 2>&1; then
+    print -- "Cactus 已停止。"
+    exit 0
+  fi
+  sleep 0.1
+done
+
+print -u2 -- "停止超时，请执行 launchctl print ${service_domain} 检查状态。"
+exit 1

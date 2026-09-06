@@ -3,3 +3,8 @@ dist
 dist-public
 *.local
 .DS_Store
+private-media
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.cactus-vite.log

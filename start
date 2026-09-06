@@ -1,0 +1,64 @@
+#!/bin/zsh
+
+set -euo pipefail
+
+project_dir=${0:A:h}
+service_label=local.cactus.vite
+service_domain="gui/$(id -u)/${service_label}"
+log_file="${project_dir}/.cactus-vite.log"
+port=5173
+
+if [[ "${1:-}" == "__run" ]]; then
+  node_bin=${2:?缺少 Node 路径}
+  runtime_log=${3:?缺少日志路径}
+  cd "${project_dir}"
+  print -r -- "\n[$(date '+%Y-%m-%d %H:%M:%S')] 启动 Cactus 本地服务" >> "${runtime_log}"
+  exec "${node_bin}" "${project_dir}/node_modules/vite/bin/vite.js" \
+    --host 127.0.0.1 --port "${port}" --strictPort >> "${runtime_log}" 2>&1
+fi
+
+node_bin=$(command -v node || true)
+if [[ -z "${node_bin}" ]]; then
+  print -u2 -- "启动失败：找不到 Node.js，请先安装 Node.js。"
+  exit 1
+fi
+
+if [[ ! -f "${project_dir}/node_modules/vite/bin/vite.js" ]]; then
+  print -u2 -- "启动失败：依赖尚未安装，请先在 ${project_dir} 执行 npm install。"
+  exit 1
+fi
+
+if launchctl print "${service_domain}" >/dev/null 2>&1; then
+  print -- "检测到 Cactus 已启动，正在重启……"
+  launchctl remove "${service_label}"
+  for _ in {1..30}; do
+    launchctl print "${service_domain}" >/dev/null 2>&1 || break
+    sleep 0.1
+  done
+else
+  print -- "正在后台启动 Cactus……"
+fi
+
+if lsof -nP -iTCP:${port} -sTCP:LISTEN >/dev/null 2>&1; then
+  print -u2 -- "启动失败：端口 ${port} 已被其他进程占用："
+  lsof -nP -iTCP:${port} -sTCP:LISTEN >&2
+  exit 1
+fi
+
+touch "${log_file}"
+launchctl submit -l "${service_label}" -- \
+  "${project_dir}/start" __run "${node_bin}" "${log_file}"
+
+for _ in {1..50}; do
+  if curl -fsS "http://127.0.0.1:${port}/" >/dev/null 2>&1; then
+    print -- "Cactus 已在后台运行：http://127.0.0.1:${port}/"
+    print -- "日志：${log_file}"
+    exit 0
+  fi
+  sleep 0.1
+done
+
+print -u2 -- "启动失败，最近日志如下："
+tail -n 20 "${log_file}" >&2 || true
+launchctl remove "${service_label}" >/dev/null 2>&1 || true
+exit 1

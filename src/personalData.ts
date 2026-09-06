@@ -17,11 +17,13 @@ export interface PersonalProject {
 }
 
 export const profile = {
-  brand: 'Cactus',
-  name: 'KK',
+  brand: 'Cactus / 掌仙人',
+  name: '祁珞',
+  englishName: 'Kiro',
+  alias: 'KK / 卡卡',
   handle: 'keepkeen',
-  tagline: '在技术、创作与生活之间持续记录。',
-  introduction: '这里收集我正在学习的事、做过的项目、偶尔成形的想法，以及还在生长中的故事。',
+  tagline: 'Keep Keen — 保持敏锐，也保持热忱。',
+  introduction: '一个整理记录、随笔与虚构世界的个人空间。这里的一切由虚拟身份祁珞讲述。',
 }
 
 export const notes: PersonalEntry[] = [

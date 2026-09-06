@@ -1,11 +1,18 @@
-import { useMemo, useState } from 'react'
-import { EyeOff, Filter, Plus, Search, Shield, Sparkles, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { EyeOff, Filter, Plus, Search, Shield, Sparkles, Trash2, X } from 'lucide-react'
 import { VisibilityBadge } from '../components/VisibilityBadge'
-import type { Character, NovelProject } from '../types'
+import { CharacterMediaLibrary } from '../components/CharacterMediaLibrary'
+import { NovelLinkPicker } from '../components/NovelLinkPicker'
+import { ResourceMetaBadges } from '../components/ResourceMetaBadges'
+import { deleteMediaBlob } from '../mediaStorage'
+import { getLinkedNovelIds, getResourceScope, setResourceNovelIds, stageLabels } from '../resourceLinks'
+import type { Character, NovelProject, ResourceStage } from '../types'
 
 interface CharactersViewProps {
   project: NovelProject
   onChange: (project: NovelProject) => void
+  onOpenGraph: (characterId: string) => void
+  initialCharacterId?: string | null
 }
 
 const palette = ['#54705f', '#7d6b5b', '#af6a4a', '#4d6175', '#8a625e', '#6c6d45']
@@ -23,28 +30,78 @@ const newCharacter = (): Character => ({
   secret: '',
   color: palette[Math.floor(Math.random() * palette.length)],
   visibility: 'private',
+  stage: 'inspiration',
   updatedAt: '刚刚',
+  mediaIds: [],
 })
 
-export function CharactersView({ project, onChange }: CharactersViewProps) {
+export function CharactersView({ project, onChange, onOpenGraph, initialCharacterId }: CharactersViewProps) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'public' | 'private'>('all')
   const [editing, setEditing] = useState<Character | null>(null)
+  const [editingNovelIds, setEditingNovelIds] = useState<string[]>([])
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'independent' | 'exclusive' | 'shared' | `novel:${string}`>('all')
+  const [stageFilter, setStageFilter] = useState<'all' | ResourceStage>('all')
+  const novels = project.novels ?? []
+
+  useEffect(() => {
+    if (!initialCharacterId) return
+    const character = project.characters.find((item) => item.id === initialCharacterId) ?? null
+    setEditing(character)
+    setEditingNovelIds(character ? getLinkedNovelIds(novels, 'character', character.id) : [])
+  }, [initialCharacterId, novels, project.characters])
 
   const characters = useMemo(() => project.characters.filter((character) => {
     const matchesQuery = `${character.name}${character.alias}${character.role}${character.faction}`.toLowerCase().includes(query.toLowerCase())
     const matchesFilter = filter === 'all' || character.visibility === filter
-    return matchesQuery && matchesFilter
-  }), [filter, project.characters, query])
+    const linkedNovelIds = getLinkedNovelIds(novels, 'character', character.id)
+    const scope = getResourceScope(linkedNovelIds)
+    const scopeMatches = scopeFilter === 'all' || scopeFilter === scope || (scopeFilter.startsWith('novel:') && linkedNovelIds.includes(scopeFilter.slice(6)))
+    const stageMatches = stageFilter === 'all' || character.stage === stageFilter
+    return matchesQuery && matchesFilter && scopeMatches && stageMatches
+  }), [filter, novels, project.characters, query, scopeFilter, stageFilter])
+
+  function openEditor(character: Character) {
+    setEditing(character)
+    setEditingNovelIds(getLinkedNovelIds(novels, 'character', character.id))
+  }
 
   function saveCharacter() {
     if (!editing || !editing.name.trim()) return
     const exists = project.characters.some((character) => character.id === editing.id)
-    onChange({
+    const nextProject = {
       ...project,
       characters: exists
         ? project.characters.map((character) => character.id === editing.id ? { ...editing, updatedAt: '刚刚' } : character)
         : [{ ...editing, updatedAt: '刚刚' }, ...project.characters],
+    }
+    onChange(setResourceNovelIds(nextProject, 'character', editing.id, editingNovelIds))
+    setEditing(null)
+  }
+
+  function updateCharacterMedia(assets: NonNullable<NovelProject['media']>) {
+    if (!editing) return
+    const otherAssets = (project.media ?? []).filter((asset) => asset.characterId !== editing.id)
+    const mediaIds = assets.map((asset) => asset.id)
+    setEditing({ ...editing, mediaIds })
+    onChange({ ...project, media: [...otherAssets, ...assets] })
+  }
+
+  async function removeCharacter() {
+    if (!editing) return
+    const relationshipCount = project.relationships.filter((relationship) => relationship.sourceId === editing.id || relationship.targetId === editing.id).length
+    if (relationshipCount > 0) {
+      window.alert(`该角色仍关联 ${relationshipCount} 条关系，请先在关系图中处理后再删除。`)
+      return
+    }
+    if (!window.confirm(`确认删除角色“${editing.name}”及其本地媒体吗？此操作无法撤销。`)) return
+    const characterMedia = (project.media ?? []).filter((asset) => asset.characterId === editing.id)
+    await Promise.all(characterMedia.map((asset) => asset.blobId ? deleteMediaBlob(asset.blobId) : Promise.resolve()))
+    onChange({
+      ...project,
+      characters: project.characters.filter((character) => character.id !== editing.id),
+      media: (project.media ?? []).filter((asset) => asset.characterId !== editing.id),
+      novels: (project.novels ?? []).map((novel) => ({ ...novel, characterIds: novel.characterIds.filter((id) => id !== editing.id) })),
     })
     setEditing(null)
   }
@@ -60,15 +117,20 @@ export function CharactersView({ project, onChange }: CharactersViewProps) {
         <div className="toolbar-actions">
           <label className="compact-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索角色" /></label>
           <button className="square-button" aria-label="筛选"><Filter size={16} /></button>
-          <button className="primary-button" onClick={() => setEditing(newCharacter())}><Plus size={16} /> 新建角色</button>
+          <button className="primary-button" onClick={() => openEditor(newCharacter())}><Plus size={16} /> 新建角色</button>
         </div>
+      </section>
+
+      <section className="resource-filter-bar">
+        <label>归属<select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}><option value="all">全部范围</option><option value="independent">独立资料</option><option value="exclusive">小说专属</option><option value="shared">多作品共享</option>{novels.map((novel) => <option key={novel.id} value={`novel:${novel.id}`}>《{novel.title}》</option>)}</select></label>
+        <label>阶段<select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as typeof stageFilter)}><option value="all">全部阶段</option>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       </section>
 
       <section className="character-grid">
         {characters.map((character) => {
           const relationshipCount = project.relationships.filter((relationship) => relationship.sourceId === character.id || relationship.targetId === character.id).length
           return (
-            <button className="character-card" key={character.id} onClick={() => setEditing(character)}>
+            <button className="character-card" key={character.id} onClick={() => openEditor(character)}>
               <div className="portrait" style={{ '--character-color': character.color } as React.CSSProperties}>
                 <span>{character.name.slice(0, 1)}</span>
                 {character.visibility === 'private' && <i><EyeOff size={12} /></i>}
@@ -76,13 +138,14 @@ export function CharactersView({ project, onChange }: CharactersViewProps) {
               <div className="character-card-body">
                 <div className="character-name-row"><h3>{character.name}</h3><VisibilityBadge value={character.visibility} /></div>
                 <p className="character-role">{character.role}</p>
+                <ResourceMetaBadges stage={character.stage} novelIds={getLinkedNovelIds(novels, 'character', character.id)} novels={novels} />
                 <p className="character-description">{character.personality || '还没有填写角色性格。'}</p>
                 <div className="character-meta"><span><Shield size={13} /> {character.faction}</span><span>{relationshipCount} 条关系</span></div>
               </div>
             </button>
           )
         })}
-        <button className="character-card add-character" onClick={() => setEditing(newCharacter())}>
+        <button className="character-card add-character" onClick={() => openEditor(newCharacter())}>
           <span><Plus size={22} /></span><strong>创造一个新角色</strong><small>从名字和欲望开始</small>
         </button>
       </section>
@@ -104,6 +167,7 @@ export function CharactersView({ project, onChange }: CharactersViewProps) {
               <label>阵营 / 组织<input value={editing.faction} onChange={(event) => setEditing({ ...editing, faction: event.target.value })} /></label>
               <label>年龄<input value={editing.age} onChange={(event) => setEditing({ ...editing, age: event.target.value })} /></label>
               <label>识别色<input type="color" value={editing.color} onChange={(event) => setEditing({ ...editing, color: event.target.value })} /></label>
+              <label className="form-wide">内容阶段<select value={editing.stage} onChange={(event) => setEditing({ ...editing, stage: event.target.value as ResourceStage })}>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label className="form-wide">外貌<textarea rows={3} value={editing.appearance} onChange={(event) => setEditing({ ...editing, appearance: event.target.value })} /></label>
               <label className="form-wide">性格<textarea rows={3} value={editing.personality} onChange={(event) => setEditing({ ...editing, personality: event.target.value })} /></label>
               <label className="form-wide">核心欲望<textarea rows={3} value={editing.motivation} onChange={(event) => setEditing({ ...editing, motivation: event.target.value })} /></label>
@@ -115,9 +179,12 @@ export function CharactersView({ project, onChange }: CharactersViewProps) {
                   <button className={editing.visibility === 'public' ? 'active' : ''} onClick={() => setEditing({ ...editing, visibility: 'public' })}>可公开</button>
                 </div>
               </div>
+              <div className="form-wide"><NovelLinkPicker novels={novels} value={editingNovelIds} onChange={setEditingNovelIds} /></div>
+              <div className="form-wide character-link-row"><button className="ghost-button" onClick={() => { const id = editing.id; setEditing(null); onOpenGraph(id) }}>在关系图中查看</button><span>{project.relationships.filter((relationship) => relationship.sourceId === editing.id || relationship.targetId === editing.id).length} 条关联关系</span></div>
+              <CharacterMediaLibrary characterId={editing.id} assets={(project.media ?? []).filter((asset) => asset.characterId === editing.id).sort((a, b) => a.sortOrder - b.sortOrder)} onChange={updateCharacterMedia} />
               <div className="ai-hint form-wide"><Sparkles size={16} /><span><strong>角色弧光</strong> 后续会基于章节引用展示变化轨迹，不自动续写角色。</span></div>
             </div>
-            <footer className="drawer-footer"><button className="ghost-button" onClick={() => setEditing(null)}>取消</button><button className="primary-button" onClick={saveCharacter}>保存角色</button></footer>
+            <footer className="drawer-footer character-footer">{project.characters.some((character) => character.id === editing.id) && <button className="danger-button" onClick={() => void removeCharacter()}><Trash2 size={14} /> 删除角色</button>}<span /><button className="ghost-button" onClick={() => setEditing(null)}>取消</button><button className="primary-button" onClick={saveCharacter}>保存角色</button></footer>
           </aside>
         </div>
       )}

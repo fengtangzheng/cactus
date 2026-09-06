@@ -1,19 +1,18 @@
 import {
+  Archive,
   BookOpenText,
   Boxes,
   ChartNoAxesCombined,
   Eye,
-  FilePenLine,
-  FolderKanban,
   GitFork,
-  GraduationCap,
+  Info,
   LayoutDashboard,
   NotebookPen,
   Settings2,
   UsersRound,
 } from 'lucide-react'
 
-export type ViewKey = 'home' | 'notes' | 'learning' | 'projects' | 'fiction' | 'settings' | 'characters' | 'graph' | 'chapters' | 'publish'
+export type ViewKey = 'home' | 'essays' | 'creation' | 'novels' | 'novel' | 'settings' | 'characters' | 'graph' | 'chapters' | 'about' | 'publish'
 
 interface SidebarProps {
   active: ViewKey
@@ -23,35 +22,34 @@ interface SidebarProps {
 
 const personalItems: Array<{ key: ViewKey; label: string; icon: typeof LayoutDashboard }> = [
   { key: 'home', label: '个人总览', icon: LayoutDashboard },
-  { key: 'notes', label: '记录', icon: NotebookPen },
-  { key: 'learning', label: '学习', icon: GraduationCap },
-  { key: 'projects', label: '项目', icon: FolderKanban },
+  { key: 'essays', label: '随笔', icon: NotebookPen },
 ]
 
-const fictionItems: Array<{ key: ViewKey; label: string; icon: typeof LayoutDashboard }> = [
-  { key: 'fiction', label: '小说概览', icon: BookOpenText },
+const creationItems: Array<{ key: ViewKey; label: string; icon: typeof LayoutDashboard }> = [
+  { key: 'creation', label: '创作总览', icon: Archive },
   { key: 'settings', label: '设定集', icon: Boxes },
   { key: 'characters', label: '角色档案', icon: UsersRound },
   { key: 'graph', label: '角色关系图', icon: GitFork },
-  { key: 'chapters', label: '章节', icon: FilePenLine },
+  { key: 'novels', label: '小说', icon: BookOpenText },
 ]
 
 export function Sidebar({ active, onChange, onPreview }: SidebarProps) {
+  const isActive = (key: ViewKey) => key === 'novels' ? ['novels', 'novel', 'chapters'].includes(active) : active === key
   return (
     <aside className="sidebar">
       <button className="brand" onClick={() => onChange('home')}>
         <span className="brand-mark"><BookOpenText size={19} strokeWidth={1.8} /></span>
         <span>
           <strong>Cactus</strong>
-          <small>Personal Studio</small>
+          <small>Keep Keen Studio</small>
         </span>
       </button>
 
       <div className="project-chip">
-        <span className="project-glyph">冯</span>
+        <span className="project-glyph">KK</span>
         <span>
           <small>个人空间</small>
-          <strong>KK 的空间</strong>
+          <strong>祁珞的空间</strong>
         </span>
         <Settings2 size={15} />
       </div>
@@ -63,7 +61,7 @@ export function Sidebar({ active, onChange, onPreview }: SidebarProps) {
           return (
             <button
               key={item.key}
-              className={active === item.key ? 'nav-item active' : 'nav-item'}
+              className={isActive(item.key) ? 'nav-item active' : 'nav-item'}
               onClick={() => onChange(item.key)}
             >
               <Icon size={17} />
@@ -72,14 +70,18 @@ export function Sidebar({ active, onChange, onPreview }: SidebarProps) {
           )
         })}
         <p className="nav-caption separated">创作空间</p>
-        {fictionItems.map((item) => {
+        {creationItems.map((item) => {
           const Icon = item.icon
           return (
-            <button key={item.key} className={active === item.key ? 'nav-item active' : 'nav-item'} onClick={() => onChange(item.key)}>
+            <button key={item.key} className={isActive(item.key) ? 'nav-item active' : 'nav-item'} onClick={() => onChange(item.key)}>
               <Icon size={17} />{item.label}
             </button>
           )
         })}
+        <p className="nav-caption separated">身份</p>
+        <button className={active === 'about' ? 'nav-item active' : 'nav-item'} onClick={() => onChange('about')}>
+          <Info size={17} />关于祁珞
+        </button>
         <p className="nav-caption separated">发布</p>
         <button
           className={active === 'publish' ? 'nav-item active' : 'nav-item'}

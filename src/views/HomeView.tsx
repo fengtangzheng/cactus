@@ -1,46 +1,35 @@
-import { ArrowRight, BookOpen, FolderKanban, GraduationCap, PenLine, Sparkles } from 'lucide-react'
+import { ArrowRight, BookOpenText, Boxes, FileText, GitFork, PenLine, UsersRound } from 'lucide-react'
 import type { ViewKey } from '../components/Sidebar'
-import { learning, notes, profile, projects } from '../personalData'
 import type { NovelProject } from '../types'
 
 export function HomeView({ project, onNavigate }: { project: NovelProject; onNavigate: (view: ViewKey) => void }) {
-  return (
-    <div className="view-stack personal-dashboard">
-      <section className="personal-hero-card">
-        <div>
-          <span className="eyebrow">PERSONAL SPACE · {profile.handle}</span>
-          <h2>{profile.tagline}</h2>
-          <p>{profile.introduction}</p>
-          <div className="banner-actions">
-            <button className="primary-button" onClick={() => onNavigate('notes')}><PenLine size={16} /> 写一条记录</button>
-            <button className="ghost-button" onClick={() => onNavigate('learning')}>整理学习笔记 <ArrowRight size={15} /></button>
-          </div>
-        </div>
-        <div className="personal-seal"><span>KK</span><small>记录 · 学习 · 创作</small></div>
-      </section>
+  const essays = project.essays ?? []
+  const publicCount = essays.filter((essay) => essay.status === 'published').length
+    + project.settings.filter((item) => item.visibility === 'public').length
+    + project.characters.filter((item) => item.visibility === 'public').length
+  const privateCount = essays.filter((essay) => essay.status !== 'published').length
+    + project.settings.filter((item) => item.visibility === 'private').length
+    + project.characters.filter((item) => item.visibility === 'private').length
+  const activities = [
+    ...essays.map((item) => ({ kind: '随笔', title: item.title, time: item.updatedAt, view: 'essays' as const })),
+    ...project.chapters.map((item) => ({ kind: '章节', title: item.title, time: item.updatedAt, view: 'chapters' as const })),
+    ...project.characters.map((item) => ({ kind: '角色', title: item.name, time: item.updatedAt, view: 'characters' as const })),
+  ].slice(0, 5)
 
-      <section className="personal-module-grid">
-        <button onClick={() => onNavigate('notes')}><span><PenLine size={18} /></span><strong>记录</strong><small>{notes.length} 篇内容</small><ArrowRight size={15} /></button>
-        <button onClick={() => onNavigate('learning')}><span><GraduationCap size={18} /></span><strong>学习</strong><small>{learning.length} 个主题</small><ArrowRight size={15} /></button>
-        <button onClick={() => onNavigate('projects')}><span><FolderKanban size={18} /></span><strong>项目</strong><small>{projects.length} 个进行中</small><ArrowRight size={15} /></button>
-        <button onClick={() => onNavigate('fiction')}><span><BookOpen size={18} /></span><strong>小说创作</strong><small>{project.chapters.length} 个章节</small><ArrowRight size={15} /></button>
-      </section>
-
-      <section className="split-grid personal-split">
-        <div className="panel">
-          <div className="panel-heading"><div><span className="eyebrow">RECENT NOTES</span><h3>最近记录</h3></div><button className="text-button" onClick={() => onNavigate('notes')}>查看全部 <ArrowRight size={14} /></button></div>
-          <div className="personal-feed">
-            {notes.map((note) => <button key={note.id} onClick={() => onNavigate('notes')}><span>{note.category}</span><div><strong>{note.title}</strong><small>{note.excerpt}</small></div><time>{note.date}</time></button>)}
-          </div>
-        </div>
-        <div className="panel focus-card">
-          <span className="focus-icon"><Sparkles size={18} /></span>
-          <span className="eyebrow">CURRENT FOCUS</span>
-          <h3>正在做的事</h3>
-          <p>把 Cactus 从单一小说工具，扩展成一个真正会长期使用的个人内容系统。</p>
-          <button className="ghost-button" onClick={() => onNavigate('projects')}>查看项目 <ArrowRight size={14} /></button>
-        </div>
-      </section>
-    </div>
-  )
+  return <div className="view-stack personal-dashboard">
+    <section className="studio-hero">
+      <div><span className="eyebrow">CACTUS / 掌仙人 · KEEP KEEN</span><h2>欢迎回来，祁珞。</h2><p>在这里整理公开表达，也安放尚未完成的故事。</p><div className="banner-actions"><button className="primary-button" onClick={() => onNavigate('essays')}><PenLine size={16} /> 写一篇随笔</button><button className="ghost-button" onClick={() => onNavigate('creation')}>进入创作空间 <ArrowRight size={15} /></button></div></div>
+      <div className="studio-identity"><strong>KK</strong><span>VIRTUAL PERSONA</span></div>
+    </section>
+    <section className="stat-grid dashboard-stats">
+      <article className="stat-card"><span className="stat-icon"><FileText size={18} /></span><div><small>公开内容</small><strong>{publicCount}</strong><em>将在下一次发布中可见</em></div></article>
+      <article className="stat-card"><span className="stat-icon"><Boxes size={18} /></span><div><small>私密创作</small><strong>{privateCount}</strong><em>仅保存在当前浏览器</em></div></article>
+      <article className="stat-card"><span className="stat-icon"><UsersRound size={18} /></span><div><small>角色档案</small><strong>{project.characters.length}</strong><em>{project.relationships.length} 条角色关系</em></div></article>
+      <article className="stat-card"><span className="stat-icon"><BookOpenText size={18} /></span><div><small>小说章节</small><strong>{project.chapters.length}</strong><em>{project.chapters.reduce((sum, item) => sum + item.wordCount, 0).toLocaleString()} 字</em></div></article>
+    </section>
+    <section className="split-grid dashboard-bottom">
+      <div className="panel"><div className="panel-heading"><div><span className="eyebrow">RECENT FOOTPRINTS</span><h3>最近足迹</h3></div></div><div className="activity-list">{activities.map((activity, index) => <button key={`${activity.kind}-${index}`} onClick={() => onNavigate(activity.view)}><span>{activity.kind}</span><strong>{activity.title}</strong><time>{activity.time}</time><ArrowRight size={14} /></button>)}</div></div>
+      <div className="panel quick-entry"><span className="eyebrow">CREATION INDEX</span><h3>创作空间</h3><p>四个独立入口，一套清晰引用关系。</p><div><button onClick={() => onNavigate('settings')}><Boxes size={16} />设定集</button><button onClick={() => onNavigate('characters')}><UsersRound size={16} />角色档案</button><button onClick={() => onNavigate('graph')}><GitFork size={16} />关系图</button><button onClick={() => onNavigate('novels')}><BookOpenText size={16} />小说</button></div></div>
+    </section>
+  </div>
 }
