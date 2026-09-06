@@ -117,12 +117,25 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .cloud-panel-copy h3 { margin: 9px 0 6px; color: var(--ink); font-family: var(--serif); font-size: 19px; }
 .cloud-panel-copy p { margin: 0; font-size: 12px; line-height: 1.7; }
 .cloud-panel-copy small { display: block; margin-top: 8px; font-size: 10px; }
-.cloud-github-button, .cloud-account-actions button, .cloud-conflict button { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
-.cloud-auth-divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; }
-.cloud-auth-divider::before, .cloud-auth-divider::after { content: ''; height: 1px; background: var(--line); flex: 1; }
+.cloud-auth-options button, .cloud-password-panel button, .cloud-account-actions button, .cloud-conflict button { min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
+.cloud-auth-options button.primary-button { background: var(--accent-deep); border-color: var(--accent-deep); color: white; }
+.cloud-auth-options button:disabled, .cloud-password-panel button:disabled { opacity: .58; cursor: wait; }
+.cloud-spinner { animation: cloud-spin 1s linear infinite; }
 .cloud-auth-options form { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px; }
+.cloud-auth-options .cloud-login-form { grid-template-columns: 1fr 1fr; }
+.cloud-login-form button { grid-column: 1 / -1; }
 .cloud-auth-options form label { color: var(--muted); font-size: 10px; }
 .cloud-auth-options form input { width: 100%; min-height: 38px; margin-top: 5px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); }
+.cloud-link-login, .cloud-password-panel { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--surface-soft) 72%, transparent); }
+.cloud-link-login summary, .cloud-password-panel summary { color: var(--muted); cursor: pointer; font-size: 11px; }
+.cloud-password-panel summary { display: flex; align-items: center; gap: 6px; }
+.cloud-link-login form, .cloud-password-panel form { margin-top: 12px; }
+.cloud-link-login > p { margin: 9px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.cloud-password-panel form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cloud-password-panel form label { color: var(--muted); font-size: 10px; }
+.cloud-password-panel form input { width: 100%; min-height: 36px; margin-top: 5px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); }
+.cloud-password-panel form button { grid-column: 1 / -1; }
+.cloud-password-panel > p { margin-top: 10px; }
 .cloud-success, .cloud-error { margin: 0; padding: 10px 12px; border-radius: 8px; font-size: 11px; }
 .cloud-success { background: color-mix(in srgb, var(--sage) 55%, transparent); color: var(--accent-deep); }
 .cloud-error { background: color-mix(in srgb, var(--rust) 12%, transparent); color: var(--rust); }
@@ -751,7 +764,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .cloud-status-button { max-width: 118px; overflow: hidden; text-overflow: ellipsis; }
   .cloud-dialog-backdrop { padding: 0; }
   .cloud-dialog { width: 100vw; max-height: 100dvh; border-radius: 0; }
-  .cloud-auth-options form { grid-template-columns: 1fr; }
+  .cloud-auth-options form, .cloud-auth-options .cloud-login-form, .cloud-password-panel form { grid-template-columns: 1fr; }
+  .cloud-login-form button, .cloud-password-panel form button { grid-column: 1; }
   .cloud-studio-gate { padding: 15px; }
   .cloud-studio-gate > section { padding: 28px 18px; }
   .workspace-main { padding: 17px 15px 45px; }

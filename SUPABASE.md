@@ -36,7 +36,7 @@ https://fengtangzheng.github.io/cactus/studio/
 http://127.0.0.1:5173/
 ```
 
-邮箱 Magic Link 默认即可使用。若启用 GitHub 登录，还需在 Supabase 的 GitHub Provider 页面按提示配置 GitHub OAuth App；OAuth callback 使用 Supabase 页面给出的 `/auth/v1/callback` 地址。
+当前账号首次通过邮箱 Magic Link 建立；登录后可在“跨设备创作”面板设置密码。之后各设备默认使用邮箱与密码登录，Magic Link 仅作为恢复入口，并且不会自动创建陌生账号。
 
 ## 4. 本地配置
 
@@ -53,11 +53,13 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ./start
 ```
 
-在本机后台右上角打开“跨设备创作”，登录后会执行首次迁移：
+在本机后台右上角打开“跨设备创作”，登录后先设置密码，并执行首次迁移：
 
 1. 上传当前本地项目。
 2. 将 IndexedDB 中尚未同步的私有图片和视频上传到私有 bucket。
 3. 保留本地缓存，不删除原始本地数据。
+
+同一浏览器会持久保存登录会话；`localhost`、GitHub Pages 以及不同设备属于不同站点，需要分别登录一次。
 
 ## 5. GitHub Pages 配置
 

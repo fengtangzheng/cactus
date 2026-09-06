@@ -27,8 +27,9 @@ export interface CloudSyncController {
   lastSyncedAt?: string
   error?: string
   hasConflict: boolean
+  signInWithPassword: (email: string, password: string) => Promise<void>
   signInWithEmail: (email: string) => Promise<void>
-  signInWithGitHub: () => Promise<void>
+  updatePassword: (password: string) => Promise<boolean>
   signOut: () => Promise<void>
   syncNow: () => Promise<void>
   keepLocalVersion: () => Promise<void>
@@ -233,7 +234,10 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
   const signInWithEmail = useCallback(async (email: string) => {
     if (!supabase) return
     setError(undefined)
-    const { error: signInError } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: cloudRedirectUrl() } })
+    const { error: signInError } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: cloudRedirectUrl(), shouldCreateUser: false },
+    })
     if (signInError) {
       setError(signInError.message)
       setStatus('error')
@@ -242,14 +246,26 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
     setStatus('link-sent')
   }, [])
 
-  const signInWithGitHub = useCallback(async () => {
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
     if (!supabase) return
     setError(undefined)
-    const { error: signInError } = await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: cloudRedirectUrl() } })
+    setStatus('loading')
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) {
-      setError(signInError.message)
+      setError(signInError.message === 'Invalid login credentials' ? '邮箱或密码不正确。' : signInError.message)
       setStatus('error')
     }
+  }, [])
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) return false
+    setError(undefined)
+    const { error: updateError } = await supabase.auth.updateUser({ password })
+    if (updateError) {
+      setError(updateError.message)
+      return false
+    }
+    return true
   }, [])
 
   const signOut = useCallback(async () => {
@@ -292,8 +308,9 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
     lastSyncedAt,
     error,
     hasConflict: Boolean(conflict),
+    signInWithPassword,
     signInWithEmail,
-    signInWithGitHub,
+    updatePassword,
     signOut,
     syncNow,
     keepLocalVersion,
