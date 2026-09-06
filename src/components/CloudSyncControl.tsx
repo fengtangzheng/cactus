@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Cloud, CloudOff, Github, LoaderCircle, LogOut, Mail, RefreshCw, TriangleAlert, X } from 'lucide-react'
+import { Cloud, CloudOff, LoaderCircle, LogOut, Mail, RefreshCw, TriangleAlert, X } from 'lucide-react'
 import type { CloudSyncController } from '../cloud/useCloudSync'
 
 const statusLabels = {
@@ -25,8 +25,6 @@ function CloudAuthPanel({ cloud }: { cloud: CloudSyncController }) {
 
   if (!cloud.userEmail) return <div className="cloud-auth-options">
     <div className="cloud-panel-copy"><Cloud size={22} /><h3>连接私密创作空间</h3><p>登录后，小说、角色、设定及私有媒体将保存到你的云端账户。</p></div>
-    <button className="cloud-github-button" onClick={() => void cloud.signInWithGitHub()}><Github size={16} /> 使用 GitHub 登录</button>
-    <div className="cloud-auth-divider"><span>或使用邮箱链接</span></div>
     <form onSubmit={submitEmail}><label>邮箱<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" /></label><button className="primary-button" type="submit"><Mail size={15} /> 发送登录链接</button></form>
     {cloud.status === 'link-sent' && <p className="cloud-success">登录链接已经发送，请在同一设备打开邮件。</p>}
     {cloud.error && <p className="cloud-error">{cloud.error}</p>}
