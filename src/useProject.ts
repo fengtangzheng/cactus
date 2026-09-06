@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { seedProject } from './data'
 import type { Character, NovelProject, Relationship, ResourceStage, SettingEntry } from './types'
 
-const STORAGE_KEY = 'cactus-novel-project-v1'
+export const PROJECT_STORAGE_KEY = 'cactus-novel-project-v1'
 
 function normalizeProject(project: NovelProject): NovelProject {
   const sourceVersion = project.dataVersion ?? 1
@@ -80,9 +80,10 @@ function normalizeProject(project: NovelProject): NovelProject {
 }
 
 export function useProject() {
+  const hadLocalData = useRef(Boolean(window.localStorage.getItem(PROJECT_STORAGE_KEY)))
   const [project, setProject] = useState<NovelProject>(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY)
+      const saved = window.localStorage.getItem(PROJECT_STORAGE_KEY)
       return saved ? normalizeProject(JSON.parse(saved) as NovelProject) : seedProject
     } catch {
       return seedProject
@@ -90,12 +91,12 @@ export function useProject() {
   })
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(project))
+    window.localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project))
   }, [project])
 
   const resetProject = useCallback(() => {
     setProject(seedProject)
   }, [])
 
-  return { project, setProject, resetProject }
+  return { project, setProject, resetProject, hasLocalData: hadLocalData.current }
 }

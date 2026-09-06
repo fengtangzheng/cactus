@@ -1,12 +1,15 @@
-import { Cloud, Command, Search } from 'lucide-react'
+import { Command, Search } from 'lucide-react'
+import type { CloudSyncController } from '../cloud/useCloudSync'
+import { CloudSyncControl } from './CloudSyncControl'
 import { ThemeSwitcher } from './ThemeSwitcher'
 
 interface HeaderProps {
   title: string
   description: string
+  cloud: CloudSyncController
 }
 
-export function Header({ title, description }: HeaderProps) {
+export function Header({ title, description, cloud }: HeaderProps) {
   return (
     <header className="topbar">
       <div>
@@ -15,7 +18,7 @@ export function Header({ title, description }: HeaderProps) {
       </div>
       <div className="top-actions">
         <button className="search-trigger"><Search size={15} /> 搜索 <span><Command size={11} /> K</span></button>
-        <span className="save-state"><Cloud size={15} /> 已保存到本地</span>
+        <CloudSyncControl cloud={cloud} />
         <ThemeSwitcher storageKey="cactus-studio-theme" />
       </div>
     </header>

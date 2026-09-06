@@ -29,6 +29,9 @@ jobs:
         run: npm ci
       - name: Build public site
         run: npm run public:build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
       - name: Verify public artifact
         run: npm run public:verify
       - name: Configure Pages

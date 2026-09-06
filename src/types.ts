@@ -46,6 +46,7 @@ export interface MediaAsset {
   source: string
   publicUrl?: string
   blobId?: string
+  storagePath?: string
   fileName?: string
   mimeType?: string
   size?: number

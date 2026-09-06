@@ -8,3 +8,4 @@ private-media
 *.sqlite-shm
 *.sqlite-wal
 .cactus-vite.log
+supabase/.temp/

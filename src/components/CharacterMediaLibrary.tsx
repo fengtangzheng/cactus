@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowDown, ArrowUp, Eye, EyeOff, Image as ImageIcon, Maximize2, Trash2, Upload, Video, X } from 'lucide-react'
 import { deleteMediaBlob, saveMediaBlob } from '../mediaStorage'
+import { deletePrivateMedia, uploadPrivateMedia } from '../cloud/mediaRepository'
 import type { MediaAsset, MediaRole, Visibility } from '../types'
 import { MediaAssetMedia } from './MediaAssetMedia'
 
@@ -31,6 +32,7 @@ export function CharacterMediaLibrary({ characterId, assets, onChange }: Charact
     for (const file of Array.from(files)) {
       const id = `media-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       await saveMediaBlob(id, file)
+      const storagePath = await uploadPrivateMedia(id, file, file.name).catch(() => undefined)
       additions.push({
         id,
         characterId,
@@ -41,8 +43,9 @@ export function CharacterMediaLibrary({ characterId, assets, onChange }: Charact
         visibility: 'private',
         role: 'gallery',
         sortOrder: assets.length + additions.length + 1,
-        source: '本地上传',
+        source: storagePath ? '云端上传' : '本地上传',
         blobId: id,
+        storagePath,
         fileName: file.name,
         mimeType: file.type,
         size: file.size,
@@ -82,13 +85,14 @@ export function CharacterMediaLibrary({ characterId, assets, onChange }: Charact
 
   async function removeAsset(asset: MediaAsset) {
     if (asset.blobId) await deleteMediaBlob(asset.blobId)
+    if (asset.storagePath) await deletePrivateMedia(asset.storagePath).catch(() => undefined)
     onChange(assets.filter((item) => item.id !== asset.id))
   }
 
   return (
     <section className="media-library form-wide">
       <header>
-        <div><span className="eyebrow">MEDIA LIBRARY</span><h3>图片与视频</h3><p>原始上传保存在当前浏览器的本地媒体库中。</p></div>
+        <div><span className="eyebrow">MEDIA LIBRARY</span><h3>图片与视频</h3><p>本地模式保存在当前浏览器；登录云端后会同步到私有媒体库。</p></div>
         <label className="media-upload-button"><Upload size={15} />{uploading ? '正在保存' : '添加素材'}<input type="file" multiple accept="image/*,video/*" onChange={(event) => void addFiles(event.target.files)} /></label>
       </header>
       <div className="media-grid">

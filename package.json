@@ -9,11 +9,13 @@
     "typecheck": "tsc -b --pretty false",
     "preview": "vite preview",
     "public:dev": "vite --config apps/public/vite.config.ts",
-    "public:build": "tsc --noEmit -p apps/public/tsconfig.json && vite build --config apps/public/vite.config.ts && node scripts/create-pages-404.mjs",
+    "studio:build": "tsc --noEmit -p apps/studio/tsconfig.json && vite build --config apps/studio/vite.config.ts",
+    "public:build": "tsc --noEmit -p apps/public/tsconfig.json && vite build --config apps/public/vite.config.ts && npm run studio:build && node scripts/create-pages-404.mjs",
     "public:preview": "vite preview --config apps/public/vite.config.ts",
     "public:verify": "node scripts/verify-public-build.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.115.0",
     "@xyflow/react": "^12.8.5",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
