@@ -17,7 +17,30 @@ export interface Essay {
   updatedAt: string
 }
 
-export type SettingCategory = '世界' | '地点' | '组织' | '规则' | '物件'
+export type SettingCategory = '世界' | '地点' | '组织' | '规则' | '物件' | '地图'
+
+export interface MapOrganization {
+  organizationId: string
+  kind: '总部' | '分部' | '据点'
+}
+
+export interface MapMarker {
+  id: string
+  x: number
+  y: number
+  label: string
+  note: string
+  locationId?: string
+  novelIds: string[]
+  organizations: MapOrganization[]
+}
+
+export interface SettingMap {
+  width: number
+  height: number
+  backgroundAssetId?: string
+  markers: MapMarker[]
+}
 
 export interface SettingEntry {
   id: string
@@ -29,13 +52,15 @@ export interface SettingEntry {
   visibility: Visibility
   stage: ResourceStage
   updatedAt: string
+  map?: SettingMap
 }
 
-export type MediaRole = 'portrait' | 'cover' | 'graph-avatar' | 'gallery'
+export type MediaRole = 'portrait' | 'cover' | 'graph-avatar' | 'gallery' | 'map-base'
 
 export interface MediaAsset {
   id: string
-  characterId: string
+  characterId?: string
+  settingId?: string
   type: 'image' | 'video'
   title: string
   caption: string

@@ -3,10 +3,10 @@ import type { NovelProject } from '../types'
 
 export function PublishView({ project, onPreview, onExport }: { project: NovelProject; onPreview: () => void; onExport: () => void }) {
   const publicCharacters = project.characters.filter((item) => item.visibility === 'public').length
-  const publicSettings = project.settings.filter((item) => item.visibility === 'public').length
+  const publicSettings = project.settings.filter((item) => item.category !== '地图' && item.visibility === 'public').length
   const publicRelationships = project.relationships.filter((item) => item.visibility === 'public').length
   const publicEssays = (project.essays ?? []).filter((item) => item.status === 'published').length
-  const publicMedia = (project.media ?? []).filter((item) => item.visibility === 'public' && item.publicUrl).length
+  const publicMedia = (project.media ?? []).filter((item) => !item.settingId && item.role !== 'map-base' && item.visibility === 'public' && item.publicUrl).length
 
   return (
     <div className="view-stack publish-view">

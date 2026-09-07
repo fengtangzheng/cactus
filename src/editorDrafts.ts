@@ -34,3 +34,19 @@ export function clearEditorDraft(scope: string, id: string) {
     // Ignore storage cleanup failures.
   }
 }
+
+export function listEditorDrafts<T>(scope: string): Array<{ id: string; value: T; savedAt: number }> {
+  const prefix = `${DRAFT_PREFIX}:${scope}:`
+  const drafts: Array<{ id: string; value: T; savedAt: number }> = []
+  try {
+    for (let index = 0; index < window.localStorage.length; index++) {
+      const key = window.localStorage.key(index)
+      if (!key?.startsWith(prefix)) continue
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(key)!) as StoredEditorDraft<T>
+        drafts.push({ id: key.slice(prefix.length), ...stored })
+      } catch { /* 单份损坏草稿不影响其他草稿恢复。 */ }
+    }
+  } catch { /* 无法使用存储时仍可在内存中编辑。 */ }
+  return drafts.sort((a, b) => b.savedAt - a.savedAt)
+}

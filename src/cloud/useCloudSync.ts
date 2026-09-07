@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { NovelProject } from '../types'
-import { uploadPendingMedia } from './mediaRepository'
+import { mergeUploadedMedia, uploadPendingMedia } from './mediaRepository'
 import { createCloudProject, loadCloudProject, saveCloudProject, type CloudProjectRecord } from './projectRepository'
 import { cloudConfigured, cloudRedirectUrl, supabase } from './supabaseClient'
 
@@ -100,8 +100,9 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
     try {
       const withCloudMedia = await uploadPendingMedia(document)
       if (withCloudMedia !== document) {
-        projectRef.current = withCloudMedia
-        setProject(withCloudMedia)
+        // 上传可能较慢，只回填地址，避免覆盖期间新增的正文或标记。
+        projectRef.current = mergeUploadedMedia(projectRef.current, withCloudMedia)
+        setProject((current) => mergeUploadedMedia(current, withCloudMedia))
       }
       const result = await saveCloudProject(currentRecord.id, currentRecord.version, withCloudMedia)
       const nextRecord: CloudProjectRecord = { ...currentRecord, ...result, document: withCloudMedia }
@@ -148,8 +149,8 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
         }
         const withCloudMedia = await uploadPendingMedia(local)
         if (withCloudMedia !== local) {
-          projectRef.current = withCloudMedia
-          setProject(withCloudMedia)
+          projectRef.current = mergeUploadedMedia(projectRef.current, withCloudMedia)
+          setProject((current) => mergeUploadedMedia(current, withCloudMedia))
         }
         try {
           remoteRecord = await createCloudProject(activeUser.id, withCloudMedia)
@@ -241,10 +242,10 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
   }, [initialize, user])
 
   useEffect(() => {
-    if (!user || !readyRef.current || conflict || serialize(project) === lastSyncedRef.current) return
+    if (!user || !readyRef.current || conflict || status !== 'synced' || serialize(project) === lastSyncedRef.current) return
     const timer = window.setTimeout(() => void saveDocument(user, project), 1200)
     return () => window.clearTimeout(timer)
-  }, [conflict, project, saveDocument, user])
+  }, [conflict, project, saveDocument, status, user])
 
   const signInWithEmail = useCallback(async (email: string) => {
     if (!supabase) return

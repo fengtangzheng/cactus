@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
+    "test:maps": "node --test scripts/test-setting-maps.mjs",
     "preview": "vite preview",
     "public:dev": "vite --config apps/public/vite.config.ts",
     "studio:build": "tsc --noEmit -p apps/studio/tsconfig.json && vite build --config apps/studio/vite.config.ts",

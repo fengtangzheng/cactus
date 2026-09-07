@@ -43,6 +43,7 @@ export function StudioWorkspace({ project, setProject, cloud }: StudioWorkspaceP
   const [selectedNovelId, setSelectedNovelId] = useState(project.novels?.[0]?.id)
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null)
   const [graphNovelId, setGraphNovelId] = useState<string | null>(null)
+  const [settingsNovelId, setSettingsNovelId] = useState<string>()
 
   useEffect(() => {
     if (selectedNovelId && project.novels?.some((novel) => novel.id === selectedNovelId)) return
@@ -53,6 +54,7 @@ export function StudioWorkspace({ project, setProject, cloud }: StudioWorkspaceP
     setView(nextView)
     if (nextView !== 'graph') setSelectedCharacterId(null)
     if (nextView === 'graph') setGraphNovelId(null)
+    if (nextView === 'settings') setSettingsNovelId(undefined)
   }
 
   if (previewing) return <PublicPreview project={project} onClose={() => setPreviewing(false)} />
@@ -66,8 +68,8 @@ export function StudioWorkspace({ project, setProject, cloud }: StudioWorkspaceP
         {view === 'essays' && <EssaysView project={project} onChange={setProject} />}
         {view === 'creation' && <CreationHome project={project} onNavigate={navigate} />}
         {view === 'novels' && <NovelsView project={project} onChange={setProject} onOpen={(id) => { setSelectedNovelId(id); setView('novel') }} />}
-        {view === 'novel' && <OverviewView project={project} novelId={selectedNovelId} onChange={setProject} onNavigate={navigate} onBack={() => setView('novels')} onOpenGraph={() => { setGraphNovelId(selectedNovelId ?? null); setView('graph') }} />}
-        {view === 'settings' && <SettingsView project={project} onChange={setProject} />}
+        {view === 'novel' && <OverviewView project={project} novelId={selectedNovelId} onChange={setProject} onNavigate={navigate} onBack={() => setView('novels')} onOpenSettings={() => { setSettingsNovelId(selectedNovelId); setView('settings') }} onOpenGraph={() => { setGraphNovelId(selectedNovelId ?? null); setView('graph') }} />}
+        {view === 'settings' && <SettingsView project={project} onChange={setProject} initialNovelId={settingsNovelId} onBack={() => setView('novel')} />}
         {view === 'characters' && <CharactersView project={project} onChange={setProject} initialCharacterId={selectedCharacterId} onOpenGraph={(id) => { setSelectedCharacterId(id); setGraphNovelId(null); setView('graph') }} />}
         {view === 'graph' && <GraphView project={project} onChange={setProject} initialCharacterId={selectedCharacterId} initialNovelId={graphNovelId} onOpenCharacter={(id) => { setSelectedCharacterId(id); setView('characters') }} />}
         {view === 'chapters' && <ChaptersView project={project} novelId={selectedNovelId} onChange={setProject} onBack={() => setView('novel')} />}

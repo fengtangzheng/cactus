@@ -1,167 +1,111 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight, Filter, Plus, Search, Sparkles, Trash2, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowLeft, ChevronRight, Map, Plus, Search } from 'lucide-react'
 import { VisibilityBadge } from '../components/VisibilityBadge'
-import { NovelLinkPicker } from '../components/NovelLinkPicker'
 import { ResourceMetaBadges } from '../components/ResourceMetaBadges'
-import { clearEditorDraft, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
+import { SettingEditor, type SettingEditorDraft } from '../components/SettingEditor'
+import { clearEditorDraft, listEditorDrafts, saveEditorDraft } from '../editorDrafts'
 import { getLinkedNovelIds, getResourceScope, setResourceNovelIds, stageLabels } from '../resourceLinks'
+import { cleanSettingMap, createSetting, removeSettingFromProject, settingCategories } from '../settingMaps'
 import type { NovelProject, ResourceStage, SettingCategory, SettingEntry } from '../types'
 
 interface SettingsViewProps {
   project: NovelProject
   onChange: (project: NovelProject) => void
+  initialNovelId?: string
+  onBack?: () => void
 }
 
-const categories: Array<'全部' | SettingCategory> = ['全部', '世界', '地点', '组织', '规则', '物件']
-const SETTING_DRAFT_SCOPE = 'setting'
-
-interface SettingEditorDraft {
-  setting: SettingEntry
-  novelIds: string[]
-}
-
-const newSetting = (): SettingEntry => ({
-  id: `setting-${Date.now()}`,
-  category: '世界',
-  title: '未命名设定',
-  summary: '',
-  details: '',
-  tags: [],
-  visibility: 'private',
-  stage: 'inspiration',
-  updatedAt: '刚刚',
-})
-
-export function SettingsView({ project, onChange }: SettingsViewProps) {
-  const [category, setCategory] = useState<(typeof categories)[number]>('全部')
+export function SettingsView({ project, onChange, initialNovelId, onBack }: SettingsViewProps) {
+  const [category, setCategory] = useState<'全部' | SettingCategory>('全部')
   const [query, setQuery] = useState('')
-  const [editing, setEditing] = useState<SettingEntry | null>(null)
-  const [editingNovelIds, setEditingNovelIds] = useState<string[]>([])
-  const [scopeFilter, setScopeFilter] = useState<'all' | 'independent' | 'exclusive' | 'shared' | `novel:${string}`>('all')
+  const [editors, setEditors] = useState<Array<{ setting: SettingEntry; markerId?: string; novelId?: string }>>([])
+  const [scopeFilter, setScopeFilter] = useState(initialNovelId ? `novel:${initialNovelId}` : 'all')
   const [stageFilter, setStageFilter] = useState<'all' | ResourceStage>('all')
   const novels = project.novels ?? []
-
-  useEffect(() => {
-    if (editing) saveEditorDraft<SettingEditorDraft>(SETTING_DRAFT_SCOPE, editing.id, { setting: editing, novelIds: editingNovelIds })
-  }, [editing, editingNovelIds])
+  const drafts = listEditorDrafts<SettingEditorDraft>('setting').filter((draft) => draft.value?.setting)
+  const unsavedDrafts = drafts.filter((draft) => !project.settings.some((item) => item.id === draft.id))
+  const novelScope = scopeFilter.startsWith('novel:') ? scopeFilter.slice(6) : undefined
 
   const visibleSettings = useMemo(() => project.settings.filter((item) => {
-    const categoryMatches = category === '全部' || item.category === category
-    const queryMatches = `${item.title}${item.summary}${item.tags.join('')}`.toLowerCase().includes(query.toLowerCase())
     const linkedNovelIds = getLinkedNovelIds(novels, 'setting', item.id)
     const scope = getResourceScope(linkedNovelIds)
-    const scopeMatches = scopeFilter === 'all' || scopeFilter === scope || (scopeFilter.startsWith('novel:') && linkedNovelIds.includes(scopeFilter.slice(6)))
-    const stageMatches = stageFilter === 'all' || item.stage === stageFilter
-    return categoryMatches && queryMatches && scopeMatches && stageMatches
+    return (category === '全部' || item.category === category)
+      && `${item.title}${item.summary}${item.tags.join('')}`.toLowerCase().includes(query.toLowerCase())
+      && (scopeFilter === 'all' || scopeFilter === scope || (scopeFilter.startsWith('novel:') && linkedNovelIds.includes(scopeFilter.slice(6))))
+      && (stageFilter === 'all' || item.stage === stageFilter)
   }), [category, novels, project.settings, query, scopeFilter, stageFilter])
 
-  function openEditor(setting: SettingEntry) {
-    const draft = loadEditorDraft<SettingEditorDraft>(SETTING_DRAFT_SCOPE, setting.id)
-    setEditing(draft?.setting ?? setting)
-    setEditingNovelIds(draft?.novelIds ?? getLinkedNovelIds(novels, 'setting', setting.id))
+  function openEditor(setting: SettingEntry, markerId?: string, scopedNovelId = novelScope) {
+    setEditors((current) => {
+      const index = current.findIndex((item) => item.setting.id === setting.id)
+      if (index >= 0) return current.slice(0, index + 1).map((item, i) => i === index ? { ...item, markerId } : item)
+      return [...current, { setting, markerId, novelId: scopedNovelId }]
+    })
   }
 
-  function closeEditor() {
-    if (editing) clearEditorDraft(SETTING_DRAFT_SCOPE, editing.id)
-    setEditing(null)
+  function addSetting(kind: SettingCategory) {
+    const setting = createSetting(kind)
+    if (novelScope) saveEditorDraft<SettingEditorDraft>('setting', setting.id, { setting, novelIds: [novelScope] })
+    openEditor(setting)
   }
 
-  function saveSetting() {
-    if (!editing || !editing.title.trim()) return
-    const exists = project.settings.some((item) => item.id === editing.id)
+  function saveSetting(draft: SettingEditorDraft) {
+    const setting = { ...draft.setting, updatedAt: '刚刚' }
+    if (setting.map) setting.map = cleanSettingMap(setting.map, project, draft.novelIds)
+    const committedAssets = (draft.assets ?? []).filter((asset) => asset.id === setting.map?.backgroundAssetId)
+    const assetIds = new Set(committedAssets.map((asset) => asset.id))
     const nextProject = {
       ...project,
-      settings: exists
-        ? project.settings.map((item) => item.id === editing.id ? { ...editing, updatedAt: '刚刚' } : item)
-        : [{ ...editing, updatedAt: '刚刚' }, ...project.settings],
+      settings: project.settings.some((item) => item.id === setting.id) ? project.settings.map((item) => item.id === setting.id ? setting : item) : [setting, ...project.settings],
+      media: [...(project.media ?? []).filter((asset) => !assetIds.has(asset.id)), ...committedAssets],
     }
-    clearEditorDraft(SETTING_DRAFT_SCOPE, editing.id)
-    onChange(setResourceNovelIds(nextProject, 'setting', editing.id, editingNovelIds))
-    setEditing(null)
+    onChange(setResourceNovelIds(nextProject, 'setting', setting.id, draft.novelIds))
+    clearEditorDraft('setting', setting.id)
+    setEditors((current) => current.slice(0, -1))
   }
 
-  function removeSetting() {
-    if (!editing) return
-    const linkedNovels = (project.novels ?? []).filter((novel) => novel.settingIds.includes(editing.id))
-    if (!window.confirm(`确认删除设定“${editing.title}”吗？它会从 ${linkedNovels.length} 部小说的引用中移除，此操作无法撤销。`)) return
-    clearEditorDraft(SETTING_DRAFT_SCOPE, editing.id)
-    onChange({
-      ...project,
-      settings: project.settings.filter((item) => item.id !== editing.id),
-      novels: (project.novels ?? []).map((novel) => ({ ...novel, settingIds: novel.settingIds.filter((id) => id !== editing.id) })),
-    })
-    setEditing(null)
+  function removeSetting(id: string) {
+    const setting = project.settings.find((item) => item.id === id)
+    if (!setting) return
+    const linkedCount = getLinkedNovelIds(novels, 'setting', id).length
+    const markerCount = project.settings.reduce((count, item) => count + (item.map?.markers.filter((marker) => marker.locationId === id || marker.organizations.some((link) => link.organizationId === id)).length ?? 0), 0)
+    if (!window.confirm(`删除“${setting.title}”？将解除 ${linkedCount} 部小说引用及 ${markerCount} 处地图关联。删除地图不会删除地点和组织资料。`)) return
+    onChange(removeSettingFromProject(project, id))
+    clearEditorDraft('setting', id)
+    setEditors((current) => current.filter((item) => item.setting.id !== id))
   }
 
-  return (
-    <div className="view-stack">
-      <section className="toolbar-row">
-        <div className="segmented-control">
-          {categories.map((item) => (
-            <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>
-          ))}
-        </div>
-        <div className="toolbar-actions">
-          <label className="compact-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索设定" /></label>
-          <button className="square-button" aria-label="筛选"><Filter size={16} /></button>
-          <button className="primary-button" onClick={() => openEditor(newSetting())}><Plus size={16} /> 新建设定</button>
-        </div>
-      </section>
-
-      <section className="resource-filter-bar">
-        <label>归属<select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}><option value="all">全部范围</option><option value="independent">独立资料</option><option value="exclusive">小说专属</option><option value="shared">多作品共享</option>{novels.map((novel) => <option key={novel.id} value={`novel:${novel.id}`}>《{novel.title}》</option>)}</select></label>
-        <label>阶段<select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as typeof stageFilter)}><option value="all">全部阶段</option>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      </section>
-
-      <section className="setting-grid">
-        {visibleSettings.map((item) => (
-          <button className="setting-card" key={item.id} onClick={() => openEditor(item)}>
-            <div className="setting-card-top">
-              <span className={`category-icon category-${item.category}`}>{item.category.slice(0, 1)}</span>
-              <VisibilityBadge value={item.visibility} />
-            </div>
-            <span className="eyebrow">{item.category}</span>
-            <ResourceMetaBadges stage={item.stage} novelIds={getLinkedNovelIds(novels, 'setting', item.id)} novels={novels} />
-            <h3>{item.title}</h3>
-            <p>{item.summary || '还没有补充一句话说明。'}</p>
-            <div className="tag-row">{item.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div>
-            <footer><small>更新于 {item.updatedAt}</small><ChevronRight size={15} /></footer>
-          </button>
-        ))}
-        <button className="setting-card add-card" onClick={() => openEditor(newSetting())}>
-          <span><Plus size={20} /></span><strong>添加新的设定</strong><small>地点、规则、组织或关键物件</small>
-        </button>
-      </section>
-
-      {editing && (
-        <div className="drawer-backdrop" onMouseDown={closeEditor}>
-          <aside className="editor-drawer" onMouseDown={(event) => event.stopPropagation()}>
-            <header className="drawer-header">
-              <div><span className="eyebrow">世界观词条</span><h2>编辑设定</h2></div>
-              <button className="icon-button" onClick={closeEditor}><X size={18} /></button>
-            </header>
-            <div className="form-stack">
-              <label>名称<input value={editing.title} onChange={(event) => setEditing({ ...editing, title: event.target.value })} /></label>
-              <label>类别<select value={editing.category} onChange={(event) => setEditing({ ...editing, category: event.target.value as SettingCategory })}>{categories.slice(1).map((item) => <option key={item}>{item}</option>)}</select></label>
-              <label>内容阶段<select value={editing.stage} onChange={(event) => setEditing({ ...editing, stage: event.target.value as ResourceStage })}>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-              <label>一句话说明<textarea rows={2} value={editing.summary} onChange={(event) => setEditing({ ...editing, summary: event.target.value })} /></label>
-              <label>详细设定<textarea rows={8} value={editing.details} onChange={(event) => setEditing({ ...editing, details: event.target.value })} /></label>
-              <label>标签<input value={editing.tags.join('，')} onChange={(event) => setEditing({ ...editing, tags: event.target.value.split(/[，,]/).map((tag) => tag.trim()).filter(Boolean) })} placeholder="用逗号分隔" /></label>
-              <div className="visibility-picker">
-                <span>公开范围</span>
-                <div>
-                  <button className={editing.visibility === 'private' ? 'active' : ''} onClick={() => setEditing({ ...editing, visibility: 'private' })}>仅自己</button>
-                  <button className={editing.visibility === 'public' ? 'active' : ''} onClick={() => setEditing({ ...editing, visibility: 'public' })}>可公开</button>
-                </div>
-                <small>公开主页永远只读取标记为“可公开”的内容。</small>
-              </div>
-              <NovelLinkPicker novels={novels} value={editingNovelIds} onChange={setEditingNovelIds} />
-              <div className="ai-hint"><Sparkles size={16} /><span><strong>一致性检查</strong> 后续可提示设定冲突，首期不自动改写你的内容。</span></div>
-            </div>
-            <footer className="drawer-footer setting-footer">{project.settings.some((item) => item.id === editing.id) && <button className="danger-button" onClick={removeSetting}><Trash2 size={14} /> 删除设定</button>}<span /><button className="ghost-button" onClick={closeEditor}>取消</button><button className="primary-button" onClick={saveSetting}>保存设定</button></footer>
-          </aside>
-        </div>
-      )}
-    </div>
-  )
+  return <div className="view-stack">
+    {onBack && initialNovelId && <nav className="context-nav"><button onClick={onBack}><ArrowLeft size={15} /> 返回小说概览</button><span>{novels.find((novel) => novel.id === initialNovelId)?.title} / 设定集</span></nav>}
+    <section className="toolbar-row setting-toolbar">
+      <div className="segmented-control">{(['全部', ...settingCategories] as const).map((item) => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}</div>
+      <div className="toolbar-actions"><label className="compact-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索设定" /></label><button className="ghost-button" onClick={() => addSetting('地图')}><Map size={16} /> 新建地图</button><button className="primary-button" onClick={() => addSetting(category === '全部' ? '世界' : category)}><Plus size={16} /> 新建设定</button></div>
+    </section>
+    <section className="resource-filter-bar">
+      <label>归属<select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value)}><option value="all">全部范围</option><option value="independent">独立资料</option><option value="exclusive">小说专属</option><option value="shared">多作品共享</option>{novels.map((novel) => <option key={novel.id} value={`novel:${novel.id}`}>《{novel.title}》</option>)}</select></label>
+      <label>阶段<select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as typeof stageFilter)}><option value="all">全部阶段</option>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+    </section>
+    {unsavedDrafts.length > 0 && <section className="setting-draft-list"><span>未保存的新资料</span>{unsavedDrafts.map((draft) => <button className="ghost-button" key={draft.id} onClick={() => openEditor(draft.value.setting)}>继续草稿：{draft.value.setting.title}</button>)}</section>}
+    <section className="setting-grid">
+      {visibleSettings.map((item) => <button className="setting-card" key={item.id} onClick={() => openEditor(item)}>
+        <div className="setting-card-top"><span className={`category-icon category-${item.category}`}>{item.category === '地图' ? <Map size={18} /> : item.category.slice(0, 1)}</span><VisibilityBadge value={item.visibility} /></div>
+        <span className="eyebrow">{item.category}{drafts.some((draft) => draft.id === item.id) ? ' · 有本机草稿' : ''}</span>
+        <ResourceMetaBadges stage={item.stage} novelIds={getLinkedNovelIds(novels, 'setting', item.id)} novels={novels} />
+        <h3>{item.title}</h3><p>{item.summary || (item.category === '地图' ? '打开地图查看地点与组织驻地。' : '还没有补充一句话说明。')}</p>
+        <div className="tag-row">{item.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div><footer><small>更新于 {item.updatedAt}</small><ChevronRight size={15} /></footer>
+      </button>)}
+      <button className="setting-card add-card" onClick={() => addSetting(category === '全部' ? '世界' : category)}><span><Plus size={20} /></span><strong>添加新的设定</strong><small>地图、地点、规则、组织或关键物件</small></button>
+    </section>
+    {editors.map((entry, index) => <div key={entry.setting.id} hidden={index !== editors.length - 1}>
+      <SettingEditor setting={entry.setting} project={project} initialNovelId={entry.novelId} initialMarkerId={entry.markerId} nested={index > 0} onSave={saveSetting} onClose={() => setEditors((current) => current.slice(0, -1))} onRemove={() => removeSetting(entry.setting.id)} onOpen={openEditor}
+        onCreateLocation={(title, linkedNovelIds) => { const location = createSetting('地点', title); onChange(setResourceNovelIds({ ...project, settings: [location, ...project.settings] }, 'setting', location.id, linkedNovelIds)); return location.id }}
+        onCopy={(draft) => {
+          const copy = { ...draft.setting, id: `setting-${crypto.randomUUID()}`, title: `${draft.setting.title} · 副本`, visibility: 'private' as const }
+          const copiedAssets = [...(project.media ?? []), ...(draft.assets ?? [])].filter((asset) => asset.id === copy.map?.backgroundAssetId).map((asset) => ({ ...asset, id: `map-image-${crypto.randomUUID()}`, settingId: copy.id }))
+          if (copy.map) copy.map = { ...copy.map, backgroundAssetId: copiedAssets[0]?.id, markers: copy.map.markers.map((marker) => ({ ...marker, id: `pin-${crypto.randomUUID()}`, novelIds: [] })) }
+          saveEditorDraft<SettingEditorDraft>('setting', copy.id, { setting: copy, novelIds: [], assets: copiedAssets, tagsText: draft.tagsText })
+          openEditor(copy)
+        }} />
+    </div>)}
+  </div>
 }

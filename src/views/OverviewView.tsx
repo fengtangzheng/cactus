@@ -11,9 +11,10 @@ interface OverviewViewProps {
   onBack: () => void
   onChange: (project: NovelProject) => void
   onOpenGraph: () => void
+  onOpenSettings: () => void
 }
 
-export function OverviewView({ project, novelId, onNavigate, onBack, onChange, onOpenGraph }: OverviewViewProps) {
+export function OverviewView({ project, novelId, onNavigate, onBack, onChange, onOpenGraph, onOpenSettings }: OverviewViewProps) {
   const [referenceKind, setReferenceKind] = useState<ReferenceKind | null>(null)
   const novel = project.novels?.find((item) => item.id === novelId) ?? project.novels?.[0]
   const chapters = project.chapters.filter((chapter) => !novel || novel.chapterIds.includes(chapter.id))
@@ -49,7 +50,7 @@ export function OverviewView({ project, novelId, onNavigate, onBack, onChange, o
       </section>
 
       {novel && <section className="novel-reference-grid">
-        <article><span><Boxes size={18} /></span><div><small>SETTING REFERENCES</small><h3>设定引用</h3><p>{settings.length} 条设定属于这部小说。</p></div><button onClick={() => setReferenceKind('setting')}>管理设定 <ArrowRight size={14} /></button></article>
+        <article><span><Boxes size={18} /></span><div><small>SETTING REFERENCES</small><h3>设定引用</h3><p>{settings.length} 条设定属于这部小说。</p><button onClick={onOpenSettings}>查看设定与地图 <ArrowRight size={14} /></button></div><button onClick={() => setReferenceKind('setting')}>管理设定 <ArrowRight size={14} /></button></article>
         <article><span><UsersRound size={18} /></span><div><small>CHARACTER REFERENCES</small><h3>角色引用</h3><p>{characters.length} 位角色参与这部小说。</p></div><button onClick={() => setReferenceKind('character')}>管理角色 <ArrowRight size={14} /></button></article>
         <article><span><GitFork size={18} /></span><div><small>RELATION REFERENCES</small><h3>关系引用</h3><p>{relationships.length} 条关系进入当前故事。</p></div><button onClick={() => setReferenceKind('relationship')}>管理关系 <ArrowRight size={14} /></button></article>
       </section>}

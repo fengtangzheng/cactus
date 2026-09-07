@@ -32,6 +32,18 @@ export async function createPrivateMediaUrl(storagePath: string) {
   return data.signedUrl
 }
 
+export function mergeUploadedMedia(current: NovelProject, uploaded: NovelProject): NovelProject {
+  const uploads = new Map((uploaded.media ?? []).filter((asset) => asset.storagePath).map((asset) => [asset.id, asset]))
+  return {
+    ...current,
+    media: current.media?.map((asset) => {
+      const result = uploads.get(asset.id)
+      if (!result || result.blobId !== asset.blobId || asset.storagePath) return asset
+      return { ...asset, storagePath: result.storagePath, source: result.source }
+    }),
+  }
+}
+
 export async function uploadPendingMedia(project: NovelProject) {
   let changed = false
   const media: MediaAsset[] = []

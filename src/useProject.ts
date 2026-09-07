@@ -52,7 +52,7 @@ function normalizeProject(project: NovelProject): NovelProject {
   legacyRelationships.forEach((relationship) => mergeLegacyLinks('relationshipIds', relationship.id, relationship.novelIds))
 
   let media = project.media
-    ? project.media.map((asset) => ({ ...asset, characterId: migrateId(asset.characterId) }))
+    ? project.media.map((asset) => ({ ...asset, characterId: asset.characterId ? migrateId(asset.characterId) : undefined }))
     : seedProject.media ?? []
   if (sourceVersion < 3) {
     const refreshedSeedAssets = new Map((seedProject.media ?? []).filter((asset) => ['kk-hero', 'kk-portrait', 'kk-face', 'kk-turnaround'].includes(asset.id)).map((asset) => [asset.id, asset]))

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { EyeOff, Filter, Plus, Search, Shield, Sparkles, Trash2, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { EyeOff, Filter, Plus, Search, Shield, Trash2, X } from 'lucide-react'
 import { VisibilityBadge } from '../components/VisibilityBadge'
 import { CharacterMediaLibrary } from '../components/CharacterMediaLibrary'
 import { NovelLinkPicker } from '../components/NovelLinkPicker'
 import { ResourceMetaBadges } from '../components/ResourceMetaBadges'
-import { clearEditorDraft, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
+import { clearEditorDraft, listEditorDrafts, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
 import { deleteMediaBlob } from '../mediaStorage'
 import { getLinkedNovelIds, getResourceScope, setResourceNovelIds, stageLabels } from '../resourceLinks'
 import type { Character, NovelProject, ResourceStage } from '../types'
@@ -47,16 +47,20 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
   const [filter, setFilter] = useState<'all' | 'public' | 'private'>('all')
   const [editing, setEditing] = useState<Character | null>(null)
   const [editingNovelIds, setEditingNovelIds] = useState<string[]>([])
+  const [editorTab, setEditorTab] = useState<'profile' | 'media' | 'links'>('profile')
+  const openedInitialId = useRef<string | undefined>(undefined)
   const [scopeFilter, setScopeFilter] = useState<'all' | 'independent' | 'exclusive' | 'shared' | `novel:${string}`>('all')
   const [stageFilter, setStageFilter] = useState<'all' | ResourceStage>('all')
   const novels = project.novels ?? []
+  const newDrafts = listEditorDrafts<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE).filter((draft) => draft.value?.character && !project.characters.some((character) => character.id === draft.id))
 
   useEffect(() => {
     if (editing) saveEditorDraft<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE, editing.id, { character: editing, novelIds: editingNovelIds })
   }, [editing, editingNovelIds])
 
   useEffect(() => {
-    if (!initialCharacterId) return
+    if (!initialCharacterId || openedInitialId.current === initialCharacterId) return
+    openedInitialId.current = initialCharacterId
     const character = project.characters.find((item) => item.id === initialCharacterId) ?? null
     if (!character) {
       setEditing(null)
@@ -80,10 +84,16 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
     const draft = loadEditorDraft<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE, character.id)
     setEditing(draft?.character ?? character)
     setEditingNovelIds(draft?.novelIds ?? getLinkedNovelIds(novels, 'character', character.id))
+    setEditorTab('profile')
   }
 
   function closeEditor() {
-    if (editing) clearEditorDraft(CHARACTER_DRAFT_SCOPE, editing.id)
+    setEditing(null)
+  }
+
+  function discardEditor() {
+    if (!editing || !window.confirm('丢弃本次未保存的人物设定修改？媒体库中的操作已单独保存。')) return
+    clearEditorDraft(CHARACTER_DRAFT_SCOPE, editing.id)
     setEditing(null)
   }
 
@@ -149,6 +159,7 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
         <label>阶段<select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as typeof stageFilter)}><option value="all">全部阶段</option>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       </section>
 
+      {newDrafts.length > 0 && <section className="setting-draft-list"><span>未保存的新角色</span>{newDrafts.map((draft) => <button key={draft.id} className="ghost-button" onClick={() => openEditor(draft.value.character)}>继续草稿：{draft.value.character.name}</button>)}</section>}
       <section className="character-grid">
         {characters.map((character) => {
           const relationshipCount = project.relationships.filter((relationship) => relationship.sourceId === character.id || relationship.targetId === character.id).length
@@ -175,27 +186,35 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
 
       {editing && (
         <div className="drawer-backdrop" onMouseDown={closeEditor}>
-          <aside className="editor-drawer character-drawer" onMouseDown={(event) => event.stopPropagation()}>
+          <aside className="editor-drawer character-drawer resource-editor" role="dialog" aria-modal="true" aria-label="编辑角色" onMouseDown={(event) => event.stopPropagation()}>
             <header className="drawer-header">
               <div className="drawer-character-title">
                 <span className="small-portrait" style={{ '--character-color': editing.color } as React.CSSProperties}>{editing.name.slice(0, 1)}</span>
                 <div><span className="eyebrow">角色档案</span><h2>{editing.name}</h2></div>
               </div>
-              <button className="icon-button" onClick={closeEditor}><X size={18} /></button>
+              <button className="icon-button" aria-label="关闭并保留草稿" onClick={closeEditor}><X size={18} /></button>
             </header>
-            <div className="form-stack two-column-form">
+            <nav className="resource-editor-tabs" aria-label="角色编辑分区">{([['profile', '人物设定'], ['media', '图片视频'], ['links', '关联资料']] as const).map(([value, label]) => <button key={value} className={editorTab === value ? 'active' : ''} aria-pressed={editorTab === value} onClick={() => setEditorTab(value)}>{label}</button>)}</nav>
+            <div className="character-editor-scroll">
+            <div hidden={editorTab !== 'profile'}>
+            <div className="character-profile-layout">
+            <div className="form-stack character-basics">
               <label>姓名<input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></label>
               <label>别名<input value={editing.alias} onChange={(event) => setEditing({ ...editing, alias: event.target.value })} /></label>
               <label>角色定位<input value={editing.role} onChange={(event) => setEditing({ ...editing, role: event.target.value })} /></label>
               <label>阵营 / 组织<input value={editing.faction} onChange={(event) => setEditing({ ...editing, faction: event.target.value })} /></label>
               <label>年龄<input value={editing.age} onChange={(event) => setEditing({ ...editing, age: event.target.value })} /></label>
               <label>识别色<input type="color" value={editing.color} onChange={(event) => setEditing({ ...editing, color: event.target.value })} /></label>
-              <label className="form-wide">内容阶段<select value={editing.stage} onChange={(event) => setEditing({ ...editing, stage: event.target.value as ResourceStage })}>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label>内容阶段<select value={editing.stage} onChange={(event) => setEditing({ ...editing, stage: event.target.value as ResourceStage })}>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            </div>
+            <div className="form-stack character-writing">
               <label className="form-wide">外貌<textarea rows={3} value={editing.appearance} onChange={(event) => setEditing({ ...editing, appearance: event.target.value })} /></label>
               <label className="form-wide">性格<textarea rows={3} value={editing.personality} onChange={(event) => setEditing({ ...editing, personality: event.target.value })} /></label>
               <label className="form-wide">核心欲望<textarea rows={3} value={editing.motivation} onChange={(event) => setEditing({ ...editing, motivation: event.target.value })} /></label>
               <label className="form-wide secret-field"><span><EyeOff size={14} /> 作者秘密</span><textarea rows={3} value={editing.secret} onChange={(event) => setEditing({ ...editing, secret: event.target.value })} /><small>该字段无论角色是否公开，都不会出现在公开主页。</small></label>
-              <div className="visibility-picker form-wide">
+            </div></div></div>
+            <div hidden={editorTab !== 'links'} className="form-stack character-links">
+              <div className="visibility-picker">
                 <span>角色公开范围</span>
                 <div>
                   <button className={editing.visibility === 'private' ? 'active' : ''} onClick={() => setEditing({ ...editing, visibility: 'private' })}>仅自己</button>
@@ -204,10 +223,10 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
               </div>
               <div className="form-wide"><NovelLinkPicker novels={novels} value={editingNovelIds} onChange={setEditingNovelIds} /></div>
               <div className="form-wide character-link-row"><button className="ghost-button" onClick={() => { const id = editing.id; setEditing(null); onOpenGraph(id) }}>在关系图中查看</button><span>{project.relationships.filter((relationship) => relationship.sourceId === editing.id || relationship.targetId === editing.id).length} 条关联关系</span></div>
-              <CharacterMediaLibrary characterId={editing.id} assets={(project.media ?? []).filter((asset) => asset.characterId === editing.id).sort((a, b) => a.sortOrder - b.sortOrder)} onChange={updateCharacterMedia} />
-              <div className="ai-hint form-wide"><Sparkles size={16} /><span><strong>角色弧光</strong> 后续会基于章节引用展示变化轨迹，不自动续写角色。</span></div>
             </div>
-            <footer className="drawer-footer character-footer">{project.characters.some((character) => character.id === editing.id) && <button className="danger-button" onClick={() => void removeCharacter()}><Trash2 size={14} /> 删除角色</button>}<span /><button className="ghost-button" onClick={closeEditor}>取消</button><button className="primary-button" onClick={saveCharacter}>保存角色</button></footer>
+            <div hidden={editorTab !== 'media'} className="form-stack character-media-tab"><CharacterMediaLibrary characterId={editing.id} assets={(project.media ?? []).filter((asset) => asset.characterId === editing.id).sort((a, b) => a.sortOrder - b.sortOrder)} onChange={updateCharacterMedia} /></div>
+            </div>
+            <footer className="drawer-footer resource-editor-footer">{project.characters.some((character) => character.id === editing.id) && <button className="danger-button" onClick={() => void removeCharacter()}><Trash2 size={14} /> 删除角色</button>}<span>人物草稿暂存本机</span><button className="ghost-button" onClick={discardEditor}>丢弃草稿</button><button className="ghost-button" onClick={closeEditor}>关闭</button><button className="primary-button" onClick={saveCharacter}>保存角色</button></footer>
           </aside>
         </div>
       )}
