@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight, Filter, Plus, Search, Sparkles, Trash2, X } from 'lucide-react'
 import { VisibilityBadge } from '../components/VisibilityBadge'
 import { NovelLinkPicker } from '../components/NovelLinkPicker'
 import { ResourceMetaBadges } from '../components/ResourceMetaBadges'
+import { clearEditorDraft, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
 import { getLinkedNovelIds, getResourceScope, setResourceNovelIds, stageLabels } from '../resourceLinks'
 import type { NovelProject, ResourceStage, SettingCategory, SettingEntry } from '../types'
 
@@ -12,6 +13,12 @@ interface SettingsViewProps {
 }
 
 const categories: Array<'全部' | SettingCategory> = ['全部', '世界', '地点', '组织', '规则', '物件']
+const SETTING_DRAFT_SCOPE = 'setting'
+
+interface SettingEditorDraft {
+  setting: SettingEntry
+  novelIds: string[]
+}
 
 const newSetting = (): SettingEntry => ({
   id: `setting-${Date.now()}`,
@@ -34,6 +41,10 @@ export function SettingsView({ project, onChange }: SettingsViewProps) {
   const [stageFilter, setStageFilter] = useState<'all' | ResourceStage>('all')
   const novels = project.novels ?? []
 
+  useEffect(() => {
+    if (editing) saveEditorDraft<SettingEditorDraft>(SETTING_DRAFT_SCOPE, editing.id, { setting: editing, novelIds: editingNovelIds })
+  }, [editing, editingNovelIds])
+
   const visibleSettings = useMemo(() => project.settings.filter((item) => {
     const categoryMatches = category === '全部' || item.category === category
     const queryMatches = `${item.title}${item.summary}${item.tags.join('')}`.toLowerCase().includes(query.toLowerCase())
@@ -45,8 +56,14 @@ export function SettingsView({ project, onChange }: SettingsViewProps) {
   }), [category, novels, project.settings, query, scopeFilter, stageFilter])
 
   function openEditor(setting: SettingEntry) {
-    setEditing(setting)
-    setEditingNovelIds(getLinkedNovelIds(novels, 'setting', setting.id))
+    const draft = loadEditorDraft<SettingEditorDraft>(SETTING_DRAFT_SCOPE, setting.id)
+    setEditing(draft?.setting ?? setting)
+    setEditingNovelIds(draft?.novelIds ?? getLinkedNovelIds(novels, 'setting', setting.id))
+  }
+
+  function closeEditor() {
+    if (editing) clearEditorDraft(SETTING_DRAFT_SCOPE, editing.id)
+    setEditing(null)
   }
 
   function saveSetting() {
@@ -58,6 +75,7 @@ export function SettingsView({ project, onChange }: SettingsViewProps) {
         ? project.settings.map((item) => item.id === editing.id ? { ...editing, updatedAt: '刚刚' } : item)
         : [{ ...editing, updatedAt: '刚刚' }, ...project.settings],
     }
+    clearEditorDraft(SETTING_DRAFT_SCOPE, editing.id)
     onChange(setResourceNovelIds(nextProject, 'setting', editing.id, editingNovelIds))
     setEditing(null)
   }
@@ -66,6 +84,7 @@ export function SettingsView({ project, onChange }: SettingsViewProps) {
     if (!editing) return
     const linkedNovels = (project.novels ?? []).filter((novel) => novel.settingIds.includes(editing.id))
     if (!window.confirm(`确认删除设定“${editing.title}”吗？它会从 ${linkedNovels.length} 部小说的引用中移除，此操作无法撤销。`)) return
+    clearEditorDraft(SETTING_DRAFT_SCOPE, editing.id)
     onChange({
       ...project,
       settings: project.settings.filter((item) => item.id !== editing.id),
@@ -115,11 +134,11 @@ export function SettingsView({ project, onChange }: SettingsViewProps) {
       </section>
 
       {editing && (
-        <div className="drawer-backdrop" onMouseDown={() => setEditing(null)}>
+        <div className="drawer-backdrop" onMouseDown={closeEditor}>
           <aside className="editor-drawer" onMouseDown={(event) => event.stopPropagation()}>
             <header className="drawer-header">
               <div><span className="eyebrow">世界观词条</span><h2>编辑设定</h2></div>
-              <button className="icon-button" onClick={() => setEditing(null)}><X size={18} /></button>
+              <button className="icon-button" onClick={closeEditor}><X size={18} /></button>
             </header>
             <div className="form-stack">
               <label>名称<input value={editing.title} onChange={(event) => setEditing({ ...editing, title: event.target.value })} /></label>
@@ -139,7 +158,7 @@ export function SettingsView({ project, onChange }: SettingsViewProps) {
               <NovelLinkPicker novels={novels} value={editingNovelIds} onChange={setEditingNovelIds} />
               <div className="ai-hint"><Sparkles size={16} /><span><strong>一致性检查</strong> 后续可提示设定冲突，首期不自动改写你的内容。</span></div>
             </div>
-            <footer className="drawer-footer setting-footer">{project.settings.some((item) => item.id === editing.id) && <button className="danger-button" onClick={removeSetting}><Trash2 size={14} /> 删除设定</button>}<span /><button className="ghost-button" onClick={() => setEditing(null)}>取消</button><button className="primary-button" onClick={saveSetting}>保存设定</button></footer>
+            <footer className="drawer-footer setting-footer">{project.settings.some((item) => item.id === editing.id) && <button className="danger-button" onClick={removeSetting}><Trash2 size={14} /> 删除设定</button>}<span /><button className="ghost-button" onClick={closeEditor}>取消</button><button className="primary-button" onClick={saveSetting}>保存设定</button></footer>
           </aside>
         </div>
       )}

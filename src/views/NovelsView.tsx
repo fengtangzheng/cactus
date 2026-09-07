@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowRight, BookOpenText, PenLine, Plus, Trash2, X } from 'lucide-react'
+import { clearEditorDraft, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
 import type { Novel, NovelProject } from '../types'
 
 interface NovelsViewProps {
@@ -29,14 +30,30 @@ const statusLabels: Record<Novel['status'], string> = {
   completed: '已完成',
 }
 
+const NOVEL_DRAFT_SCOPE = 'novel'
+
 export function NovelsView({ project, onChange, onOpen }: NovelsViewProps) {
   const novels = project.novels ?? []
   const [editing, setEditing] = useState<Novel | null>(null)
+
+  useEffect(() => {
+    if (editing) saveEditorDraft(NOVEL_DRAFT_SCOPE, editing.id, editing)
+  }, [editing])
+
+  function openEditor(novel: Novel) {
+    setEditing(loadEditorDraft<Novel>(NOVEL_DRAFT_SCOPE, novel.id) ?? novel)
+  }
+
+  function closeEditor() {
+    if (editing) clearEditorDraft(NOVEL_DRAFT_SCOPE, editing.id)
+    setEditing(null)
+  }
 
   function saveNovel() {
     if (!editing?.title.trim()) return
     const exists = novels.some((novel) => novel.id === editing.id)
     const updated = { ...editing, updatedAt: '刚刚' }
+    clearEditorDraft(NOVEL_DRAFT_SCOPE, updated.id)
     onChange({ ...project, novels: exists ? novels.map((novel) => novel.id === updated.id ? updated : novel) : [updated, ...novels] })
     setEditing(null)
     onOpen(updated.id)
@@ -45,6 +62,7 @@ export function NovelsView({ project, onChange, onOpen }: NovelsViewProps) {
   function removeNovel(novel: Novel) {
     const chapterIds = new Set(novel.chapterIds)
     if (!window.confirm(`确认删除小说“${novel.title}”及其 ${novel.chapterIds.length} 个章节吗？关联的设定、角色和关系档案会保留。`)) return
+    clearEditorDraft(NOVEL_DRAFT_SCOPE, novel.id)
     onChange({
       ...project,
       novels: novels.filter((item) => item.id !== novel.id),
@@ -53,7 +71,7 @@ export function NovelsView({ project, onChange, onOpen }: NovelsViewProps) {
   }
 
   return <div className="view-stack">
-    <section className="content-intro"><div><span className="eyebrow">FICTION ARCHIVE</span><h2>小说</h2><p>每部作品独立管理概览、引用资料与章节。</p></div><button className="primary-button" onClick={() => setEditing(createNovel())}><Plus size={16} /> 新建小说</button></section>
+    <section className="content-intro"><div><span className="eyebrow">FICTION ARCHIVE</span><h2>小说</h2><p>每部作品独立管理概览、引用资料与章节。</p></div><button className="primary-button" onClick={() => openEditor(createNovel())}><Plus size={16} /> 新建小说</button></section>
     <section className="novel-list">{novels.map((novel, index) => <article className="novel-list-row" key={novel.id}>
       <button className="novel-list-open" onClick={() => onOpen(novel.id)}>
         <span className="novel-list-number">{String(index + 1).padStart(2, '0')}</span>
@@ -61,12 +79,12 @@ export function NovelsView({ project, onChange, onOpen }: NovelsViewProps) {
         <span className="novel-list-copy"><small>{statusLabels[novel.status]}</small><strong>{novel.title}</strong><em>{novel.synopsis || '还没有填写作品简介。'}</em></span>
         <span className="novel-list-meta">{novel.chapterIds.length} 章 · {novel.updatedAt}</span><ArrowRight size={18} />
       </button>
-      <div className="novel-row-actions"><button aria-label={`编辑${novel.title}`} onClick={() => setEditing(novel)}><PenLine size={15} /></button><button className="danger" aria-label={`删除${novel.title}`} onClick={() => removeNovel(novel)}><Trash2 size={15} /></button></div>
+      <div className="novel-row-actions"><button aria-label={`编辑${novel.title}`} onClick={() => openEditor(novel)}><PenLine size={15} /></button><button className="danger" aria-label={`删除${novel.title}`} onClick={() => removeNovel(novel)}><Trash2 size={15} /></button></div>
     </article>)}</section>
-    {novels.length === 0 && <section className="novel-empty"><BookOpenText size={28} /><h3>还没有小说</h3><p>从一个标题和一句话开始。</p><button className="primary-button" onClick={() => setEditing(createNovel())}><Plus size={16} /> 新建小说</button></section>}
+    {novels.length === 0 && <section className="novel-empty"><BookOpenText size={28} /><h3>还没有小说</h3><p>从一个标题和一句话开始。</p><button className="primary-button" onClick={() => openEditor(createNovel())}><Plus size={16} /> 新建小说</button></section>}
 
-    {editing && <div className="drawer-backdrop" onMouseDown={() => setEditing(null)}><aside className="editor-drawer" onMouseDown={(event) => event.stopPropagation()}>
-      <header className="drawer-header"><div><span className="eyebrow">FICTION PROFILE</span><h2>{editing.title}</h2></div><button className="icon-button" onClick={() => setEditing(null)}><X size={18} /></button></header>
+    {editing && <div className="drawer-backdrop" onMouseDown={closeEditor}><aside className="editor-drawer" onMouseDown={(event) => event.stopPropagation()}>
+      <header className="drawer-header"><div><span className="eyebrow">FICTION PROFILE</span><h2>{editing.title}</h2></div><button className="icon-button" onClick={closeEditor}><X size={18} /></button></header>
       <div className="form-stack">
         <label>小说名称<input value={editing.title} onChange={(event) => setEditing({ ...editing, title: event.target.value })} /></label>
         <label>副标题<input value={editing.subtitle} onChange={(event) => setEditing({ ...editing, subtitle: event.target.value })} /></label>
@@ -74,7 +92,7 @@ export function NovelsView({ project, onChange, onOpen }: NovelsViewProps) {
         <label>创作状态<select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as Novel['status'] })}><option value="idea">构思中</option><option value="drafting">创作中</option><option value="serializing">连载中</option><option value="completed">已完成</option></select></label>
         <div className="visibility-picker"><span>公开范围</span><div><button className={editing.visibility === 'private' ? 'active' : ''} onClick={() => setEditing({ ...editing, visibility: 'private' })}>仅自己</button><button className={editing.visibility === 'public' ? 'active' : ''} onClick={() => setEditing({ ...editing, visibility: 'public' })}>可公开</button></div><small>新小说默认仅保存在本机。</small></div>
       </div>
-      <footer className="drawer-footer"><button className="ghost-button" onClick={() => setEditing(null)}>取消</button><button className="primary-button" onClick={saveNovel}>保存并打开</button></footer>
+      <footer className="drawer-footer"><button className="ghost-button" onClick={closeEditor}>取消</button><button className="primary-button" onClick={saveNovel}>保存并打开</button></footer>
     </aside></div>}
   </div>
 }

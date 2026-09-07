@@ -78,6 +78,7 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
   const lastSyncedRef = useRef('')
   const readyRef = useRef(false)
   const savingRef = useRef(false)
+  const initializedUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     projectRef.current = project
@@ -123,11 +124,19 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
   }, [markSynced, setProject])
 
   const initialize = useCallback(async (activeUser: User) => {
-    readyRef.current = false
-    setReady(false)
+    const keepWorkspaceReady = readyRef.current && initializedUserIdRef.current === activeUser.id
+    if (!keepWorkspaceReady) {
+      readyRef.current = false
+      setReady(false)
+    }
     setConflict(null)
     setError(undefined)
     setStatus('loading')
+    const markReadyForUser = () => {
+      initializedUserIdRef.current = activeUser.id
+      readyRef.current = true
+      setReady(true)
+    }
     try {
       const local = projectRef.current
       let remoteRecord = await loadCloudProject(activeUser.id)
@@ -149,8 +158,7 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
           if (!remoteRecord) throw createError
         }
         recordRef.current = remoteRecord
-        readyRef.current = true
-        setReady(true)
+        markReadyForUser()
         markSynced(activeUser, remoteRecord, withCloudMedia)
         return
       }
@@ -162,8 +170,7 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
       if (!hasLocalData) {
         projectRef.current = remoteRecord.document
         setProject(remoteRecord.document)
-        readyRef.current = true
-        setReady(true)
+        markReadyForUser()
         markSynced(activeUser, remoteRecord, remoteRecord.document)
         return
       }
@@ -177,8 +184,7 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
           return
         }
         if (localChanged) {
-          readyRef.current = true
-          setReady(true)
+          markReadyForUser()
           lastSyncedRef.current = metadata.snapshot
           await saveDocument(activeUser, local, remoteRecord)
           return
@@ -191,8 +197,7 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
 
       projectRef.current = remoteRecord.document
       setProject(remoteRecord.document)
-      readyRef.current = true
-      setReady(true)
+      markReadyForUser()
       markSynced(activeUser, remoteRecord, remoteRecord.document)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : '无法连接云端项目。')
@@ -200,18 +205,26 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
     }
   }, [cacheKey, createWhenMissing, hasLocalData, markSynced, saveDocument, setProject])
 
+  const applySessionUser = useCallback((nextUser: User | null) => {
+    setUser((currentUser) => {
+      if (!nextUser) return currentUser ? null : currentUser
+      if (currentUser?.id === nextUser.id && currentUser.email === nextUser.email) return currentUser
+      return nextUser
+    })
+  }, [])
+
   useEffect(() => {
     if (!supabase) return
     let active = true
     void supabase.auth.getSession().then(({ data }) => {
-      if (active) setUser(data.session?.user ?? null)
+      if (active) applySessionUser(data.session?.user ?? null)
     })
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null))
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => applySessionUser(session?.user ?? null))
     return () => {
       active = false
       data.subscription.unsubscribe()
     }
-  }, [])
+  }, [applySessionUser])
 
   useEffect(() => {
     if (!cloudConfigured) return
@@ -219,9 +232,11 @@ export function useCloudSync({ project, setProject, hasLocalData, cacheKey, crea
       readyRef.current = false
       setReady(false)
       recordRef.current = null
+      initializedUserIdRef.current = null
       setStatus('signed-out')
       return
     }
+    if (initializedUserIdRef.current === user.id && readyRef.current) return
     void initialize(user)
   }, [initialize, user])
 

@@ -4,6 +4,7 @@ import { VisibilityBadge } from '../components/VisibilityBadge'
 import { CharacterMediaLibrary } from '../components/CharacterMediaLibrary'
 import { NovelLinkPicker } from '../components/NovelLinkPicker'
 import { ResourceMetaBadges } from '../components/ResourceMetaBadges'
+import { clearEditorDraft, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
 import { deleteMediaBlob } from '../mediaStorage'
 import { getLinkedNovelIds, getResourceScope, setResourceNovelIds, stageLabels } from '../resourceLinks'
 import type { Character, NovelProject, ResourceStage } from '../types'
@@ -16,6 +17,12 @@ interface CharactersViewProps {
 }
 
 const palette = ['#54705f', '#7d6b5b', '#af6a4a', '#4d6175', '#8a625e', '#6c6d45']
+const CHARACTER_DRAFT_SCOPE = 'character'
+
+interface CharacterEditorDraft {
+  character: Character
+  novelIds: string[]
+}
 
 const newCharacter = (): Character => ({
   id: `character-${Date.now()}`,
@@ -45,10 +52,18 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
   const novels = project.novels ?? []
 
   useEffect(() => {
+    if (editing) saveEditorDraft<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE, editing.id, { character: editing, novelIds: editingNovelIds })
+  }, [editing, editingNovelIds])
+
+  useEffect(() => {
     if (!initialCharacterId) return
     const character = project.characters.find((item) => item.id === initialCharacterId) ?? null
-    setEditing(character)
-    setEditingNovelIds(character ? getLinkedNovelIds(novels, 'character', character.id) : [])
+    if (!character) {
+      setEditing(null)
+      setEditingNovelIds([])
+      return
+    }
+    openEditor(character)
   }, [initialCharacterId, novels, project.characters])
 
   const characters = useMemo(() => project.characters.filter((character) => {
@@ -62,8 +77,14 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
   }), [filter, novels, project.characters, query, scopeFilter, stageFilter])
 
   function openEditor(character: Character) {
-    setEditing(character)
-    setEditingNovelIds(getLinkedNovelIds(novels, 'character', character.id))
+    const draft = loadEditorDraft<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE, character.id)
+    setEditing(draft?.character ?? character)
+    setEditingNovelIds(draft?.novelIds ?? getLinkedNovelIds(novels, 'character', character.id))
+  }
+
+  function closeEditor() {
+    if (editing) clearEditorDraft(CHARACTER_DRAFT_SCOPE, editing.id)
+    setEditing(null)
   }
 
   function saveCharacter() {
@@ -75,6 +96,7 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
         ? project.characters.map((character) => character.id === editing.id ? { ...editing, updatedAt: '刚刚' } : character)
         : [{ ...editing, updatedAt: '刚刚' }, ...project.characters],
     }
+    clearEditorDraft(CHARACTER_DRAFT_SCOPE, editing.id)
     onChange(setResourceNovelIds(nextProject, 'character', editing.id, editingNovelIds))
     setEditing(null)
   }
@@ -95,6 +117,7 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
       return
     }
     if (!window.confirm(`确认删除角色“${editing.name}”及其本地媒体吗？此操作无法撤销。`)) return
+    clearEditorDraft(CHARACTER_DRAFT_SCOPE, editing.id)
     const characterMedia = (project.media ?? []).filter((asset) => asset.characterId === editing.id)
     await Promise.all(characterMedia.map((asset) => asset.blobId ? deleteMediaBlob(asset.blobId) : Promise.resolve()))
     onChange({
@@ -151,14 +174,14 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
       </section>
 
       {editing && (
-        <div className="drawer-backdrop" onMouseDown={() => setEditing(null)}>
+        <div className="drawer-backdrop" onMouseDown={closeEditor}>
           <aside className="editor-drawer character-drawer" onMouseDown={(event) => event.stopPropagation()}>
             <header className="drawer-header">
               <div className="drawer-character-title">
                 <span className="small-portrait" style={{ '--character-color': editing.color } as React.CSSProperties}>{editing.name.slice(0, 1)}</span>
                 <div><span className="eyebrow">角色档案</span><h2>{editing.name}</h2></div>
               </div>
-              <button className="icon-button" onClick={() => setEditing(null)}><X size={18} /></button>
+              <button className="icon-button" onClick={closeEditor}><X size={18} /></button>
             </header>
             <div className="form-stack two-column-form">
               <label>姓名<input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></label>
@@ -184,7 +207,7 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
               <CharacterMediaLibrary characterId={editing.id} assets={(project.media ?? []).filter((asset) => asset.characterId === editing.id).sort((a, b) => a.sortOrder - b.sortOrder)} onChange={updateCharacterMedia} />
               <div className="ai-hint form-wide"><Sparkles size={16} /><span><strong>角色弧光</strong> 后续会基于章节引用展示变化轨迹，不自动续写角色。</span></div>
             </div>
-            <footer className="drawer-footer character-footer">{project.characters.some((character) => character.id === editing.id) && <button className="danger-button" onClick={() => void removeCharacter()}><Trash2 size={14} /> 删除角色</button>}<span /><button className="ghost-button" onClick={() => setEditing(null)}>取消</button><button className="primary-button" onClick={saveCharacter}>保存角色</button></footer>
+            <footer className="drawer-footer character-footer">{project.characters.some((character) => character.id === editing.id) && <button className="danger-button" onClick={() => void removeCharacter()}><Trash2 size={14} /> 删除角色</button>}<span /><button className="ghost-button" onClick={closeEditor}>取消</button><button className="primary-button" onClick={saveCharacter}>保存角色</button></footer>
           </aside>
         </div>
       )}

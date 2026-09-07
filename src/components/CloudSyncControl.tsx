@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Cloud, CloudOff, KeyRound, LoaderCircle, LockKeyhole, LogOut, Mail, RefreshCw, TriangleAlert, X } from 'lucide-react'
 import type { CloudSyncController } from '../cloud/useCloudSync'
 
@@ -113,6 +113,16 @@ export function CloudSyncControl({ cloud }: { cloud: CloudSyncController }) {
 }
 
 export function CloudStudioGate({ cloud, children }: { cloud: CloudSyncController; children: ReactNode }) {
-  if (cloud.userEmail && cloud.ready) return <>{children}</>
+  const [workspaceUnlocked, setWorkspaceUnlocked] = useState(false)
+
+  useEffect(() => {
+    if (!cloud.userEmail) {
+      setWorkspaceUnlocked(false)
+      return
+    }
+    if (cloud.ready) setWorkspaceUnlocked(true)
+  }, [cloud.ready, cloud.userEmail])
+
+  if (cloud.userEmail && (cloud.ready || workspaceUnlocked)) return <>{children}</>
   return <main className="cloud-studio-gate"><section><span className="brand-mark">KK</span><p className="eyebrow">CACTUS PRIVATE STUDIO</p><h1>祁珞的创作空间</h1><CloudAuthPanel cloud={cloud} /></section></main>
 }
