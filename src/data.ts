@@ -1,4 +1,5 @@
 import type { MediaAsset, NovelProject } from './types'
+import { chineseHistoryCharacters, chineseHistoryNovel, chineseHistoryRelationships } from './data/chineseHistory'
 
 const kiroLifeLooks = [
   ['01', '春季校园基础装', ['春季', '校园']],
@@ -49,7 +50,7 @@ const kiroLifeMedia: MediaAsset[] = kiroLifeLooks.map(([number, title, tags], in
 }))
 
 export const seedProject: NovelProject = {
-  dataVersion: 6,
+  dataVersion: 7,
   title: '雾都来信',
   subtitle: '一座城市忘记名字之前，所有人都收到了一封信。',
   penName: '未署名的写作者',
@@ -198,6 +199,7 @@ export const seedProject: NovelProject = {
       stage: 'canonical',
       updatedAt: '8 月 26 日',
     },
+    ...chineseHistoryCharacters,
   ],
   relationships: [
     {
@@ -227,6 +229,7 @@ export const seedProject: NovelProject = {
       tone: 'negative',
       visibility: 'private',
     },
+    ...chineseHistoryRelationships,
     {
       id: 'rel-zhou-lin',
       sourceId: 'director-zhou',
@@ -256,6 +259,7 @@ export const seedProject: NovelProject = {
       chapterIds: ['ch-1', 'ch-2', 'ch-3'],
       updatedAt: '今天 09:12',
     },
+    chineseHistoryNovel,
   ],
   media: [
     {

@@ -94,6 +94,20 @@ export interface Character {
   stage: ResourceStage
   updatedAt: string
   mediaIds?: string[]
+  historical?: HistoricalCharacterMeta
+}
+
+export type HistoryPeriod = '上古史' | '中古史' | '近世史' | '现代史'
+export type HistoricalImportance = '核心' | '重要' | '补充'
+
+export interface HistoricalCharacterMeta {
+  periods: HistoryPeriod[]
+  era: string
+  polity: string[]
+  types: string[]
+  domains: string[]
+  importance: HistoricalImportance
+  sourceScope: string
 }
 
 export interface Relationship {
@@ -104,6 +118,9 @@ export interface Relationship {
   detail: string
   tone: 'positive' | 'negative' | 'neutral' | 'hidden'
   visibility: Visibility
+  kind?: string
+  event?: string
+  periods?: HistoryPeriod[]
 }
 
 export interface Chapter {

@@ -14,8 +14,8 @@ import {
   type NodeMouseHandler,
   type NodeProps,
 } from '@xyflow/react'
-import { Eye, EyeOff, ExternalLink, GitFork, Plus, Trash2, X } from 'lucide-react'
-import type { Character, MediaAsset, NovelProject, Relationship } from '../types'
+import { Eye, EyeOff, ExternalLink, GitFork, Plus, Search, Trash2, X } from 'lucide-react'
+import type { Character, HistoryPeriod, MediaAsset, NovelProject, Relationship } from '../types'
 import { getLinkedNovelIds } from '../resourceLinks'
 
 interface GraphViewProps {
@@ -34,20 +34,18 @@ const toneColors: Record<Relationship['tone'], string> = {
   neutral: '#8b8173',
   hidden: '#665a78',
 }
+const historyPeriods: HistoryPeriod[] = ['上古史', '中古史', '近世史', '现代史']
 
 function publicMediaUrl(url?: string) {
   return url
 }
 
 function characterNodes(characters: Character[], media: MediaAsset[]): Node[] {
-  const centerX = 390
-  const centerY = 235
-  const radius = 190
+  const columns = Math.max(1, Math.min(8, Math.ceil(Math.sqrt(characters.length * 1.5))))
   return characters.map((character, index) => {
-    const angle = (index / Math.max(characters.length, 1)) * Math.PI * 2 - Math.PI / 2
     return {
       id: character.id,
-      position: { x: centerX + Math.cos(angle) * radius, y: centerY + Math.sin(angle) * radius },
+      position: { x: (index % columns) * 190, y: Math.floor(index / columns) * 125 },
       type: 'storyCharacter',
       data: {
         label: character.name,
@@ -102,19 +100,49 @@ export function GraphView({ project, onChange, initialCharacterId, initialNovelI
   const [scope, setScope] = useState<GraphScope>(initialNovelId ? `novel:${initialNovelId}` : 'all')
   const scopeNovelId = scope.startsWith('novel:') ? scope.slice(6) : null
   const scopeNovel = scopeNovelId ? novels.find((novel) => novel.id === scopeNovelId) : undefined
-  const visibleCharacters = useMemo(() => {
+  const [query, setQuery] = useState('')
+  const [periodFilter, setPeriodFilter] = useState<'all' | HistoryPeriod>('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [relationKindFilter, setRelationKindFilter] = useState('all')
+  const [neighborCharacterId, setNeighborCharacterId] = useState('all')
+  const scopedCharacters = useMemo(() => {
     if (scope === 'all') return project.characters
     if (scope === 'public') return project.characters.filter((character) => character.visibility === 'public')
     if (scope === 'independent') return project.characters.filter((character) => getLinkedNovelIds(novels, 'character', character.id).length === 0)
     return project.characters.filter((character) => scopeNovel?.characterIds.includes(character.id))
   }, [novels, project.characters, scope, scopeNovel])
-  const visibleRelationships = useMemo(() => project.relationships.filter((relationship) => {
-    if (scope === 'all') return true
+  const scopedRelationships = useMemo(() => project.relationships.filter((relationship) => {
+    const endpointIds = new Set(scopedCharacters.map((character) => character.id))
+    const endpointsInScope = endpointIds.has(relationship.sourceId) && endpointIds.has(relationship.targetId)
+    if (scope === 'all') return endpointsInScope
+    if (scope === 'public') return relationship.visibility === 'public' && endpointsInScope
+    if (scope === 'independent') return getLinkedNovelIds(novels, 'relationship', relationship.id).length === 0 && endpointsInScope
+    return Boolean(scopeNovel?.relationshipIds.includes(relationship.id)) && endpointsInScope
+  }), [novels, project.relationships, scope, scopeNovel, scopedCharacters])
+  const typeOptions = Array.from(new Set(scopedCharacters.flatMap((character) => character.historical?.types ?? []))).sort()
+  const relationKindOptions = Array.from(new Set(scopedRelationships.map((relationship) => relationship.kind).filter((value): value is string => Boolean(value)))).sort()
+  const neighborIds = useMemo(() => {
+    if (neighborCharacterId === 'all') return null
+    const ids = new Set([neighborCharacterId])
+    scopedRelationships.forEach((relationship) => {
+      if (relationship.sourceId === neighborCharacterId) ids.add(relationship.targetId)
+      if (relationship.targetId === neighborCharacterId) ids.add(relationship.sourceId)
+    })
+    return ids
+  }, [neighborCharacterId, scopedRelationships])
+  const visibleCharacters = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    return scopedCharacters.filter((character) => {
+      const matchesQuery = !needle || `${character.name}${character.alias}${character.role}${character.faction}`.toLowerCase().includes(needle)
+      const matchesPeriod = periodFilter === 'all' || character.historical?.periods.includes(periodFilter)
+      const matchesType = typeFilter === 'all' || character.historical?.types.includes(typeFilter)
+      return matchesQuery && matchesPeriod && matchesType && (!neighborIds || neighborIds.has(character.id))
+    })
+  }, [neighborIds, periodFilter, query, scopedCharacters, typeFilter])
+  const visibleRelationships = useMemo(() => scopedRelationships.filter((relationship) => {
     const endpointsVisible = visibleCharacters.some((character) => character.id === relationship.sourceId) && visibleCharacters.some((character) => character.id === relationship.targetId)
-    if (scope === 'public') return relationship.visibility === 'public' && endpointsVisible
-    if (scope === 'independent') return getLinkedNovelIds(novels, 'relationship', relationship.id).length === 0 && endpointsVisible
-    return Boolean(scopeNovel?.relationshipIds.includes(relationship.id)) && endpointsVisible
-  }), [novels, project.relationships, scope, scopeNovel, visibleCharacters])
+    return endpointsVisible && (relationKindFilter === 'all' || relationship.kind === relationKindFilter)
+  }), [relationKindFilter, scopedRelationships, visibleCharacters])
   const [nodes, setNodes, onNodesChange] = useNodesState(characterNodes(visibleCharacters, project.media ?? []))
   const [edges, setEdges, onEdgesChange] = useEdgesState(relationshipEdges(visibleRelationships))
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
@@ -173,8 +201,17 @@ export function GraphView({ project, onChange, initialCharacterId, initialNovelI
           </div>
           <div className="graph-toolbar-actions"><select className="graph-scope-select" value={scopeNovelId ?? ''} onChange={(event) => setScope(event.target.value ? `novel:${event.target.value}` : 'all')}><option value="">选择小说范围</option>{novels.map((novel) => <option key={novel.id} value={novel.id}>{novel.title}</option>)}</select><button className="primary-button" disabled={relationCharacters.length < 2} onClick={() => setEditingRelation(emptyRelationship(relationCharacters))}><Plus size={16} /> 添加关系</button></div>
         </div>
+        <div className="graph-filter-bar">
+          <label className="compact-search"><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索图中人物" /></label>
+          <label>分期<select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value as typeof periodFilter)}><option value="all">全部分期</option>{historyPeriods.map((period) => <option key={period}>{period}</option>)}</select></label>
+          <label>人物类型<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">全部类型</option>{typeOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
+          <label>关系类型<select value={relationKindFilter} onChange={(event) => setRelationKindFilter(event.target.value)}><option value="all">全部关系</option>{relationKindOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
+          <label>一度关系<select value={neighborCharacterId} onChange={(event) => setNeighborCharacterId(event.target.value)}><option value="all">全部人物</option>{scopedCharacters.map((character) => <option value={character.id} key={character.id}>{character.name}</option>)}</select></label>
+          <span className="filter-result-count">{visibleCharacters.length} 人 · {visibleRelationships.length} 条关系</span>
+        </div>
         <div className="graph-canvas">
           <ReactFlow
+            key={`${scope}-${query}-${periodFilter}-${typeFilter}-${relationKindFilter}-${neighborCharacterId}`}
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
@@ -236,6 +273,8 @@ export function GraphView({ project, onChange, initialCharacterId, initialNovelI
               <label>关系标签<input value={editingRelation.label} onChange={(event) => setEditingRelation({ ...editingRelation, label: event.target.value })} placeholder="例如：盟友、宿敌、单向暗恋" /></label>
               <label>关系说明<textarea rows={5} value={editingRelation.detail} onChange={(event) => setEditingRelation({ ...editingRelation, detail: event.target.value })} /></label>
               <label>关系倾向<select value={editingRelation.tone} onChange={(event) => setEditingRelation({ ...editingRelation, tone: event.target.value as Relationship['tone'] })}><option value="positive">正向</option><option value="negative">负向</option><option value="neutral">中性</option><option value="hidden">隐藏关系</option></select></label>
+              <label>关系类型<input value={editingRelation.kind ?? ''} onChange={(event) => setEditingRelation({ ...editingRelation, kind: event.target.value })} placeholder="例如：君臣、战争、师承" /></label>
+              <label>相关事件<input value={editingRelation.event ?? ''} onChange={(event) => setEditingRelation({ ...editingRelation, event: event.target.value })} /></label>
               <div className="visibility-picker"><span>公开范围</span><div><button className={editingRelation.visibility === 'private' ? 'active' : ''} onClick={() => setEditingRelation({ ...editingRelation, visibility: 'private' })}>仅自己</button><button className={editingRelation.visibility === 'public' ? 'active' : ''} onClick={() => setEditingRelation({ ...editingRelation, visibility: 'public' })}>可公开</button></div></div>
             </div>
             <footer className="drawer-footer relation-footer">

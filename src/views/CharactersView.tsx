@@ -7,7 +7,7 @@ import { ResourceMetaBadges } from '../components/ResourceMetaBadges'
 import { clearEditorDraft, listEditorDrafts, loadEditorDraft, saveEditorDraft } from '../editorDrafts'
 import { deleteMediaBlob } from '../mediaStorage'
 import { getLinkedNovelIds, getResourceScope, setResourceNovelIds, stageLabels } from '../resourceLinks'
-import type { Character, NovelProject, ResourceStage } from '../types'
+import type { Character, HistoricalImportance, HistoryPeriod, NovelProject, ResourceStage } from '../types'
 
 interface CharactersViewProps {
   project: NovelProject
@@ -18,6 +18,8 @@ interface CharactersViewProps {
 
 const palette = ['#54705f', '#7d6b5b', '#af6a4a', '#4d6175', '#8a625e', '#6c6d45']
 const CHARACTER_DRAFT_SCOPE = 'character'
+const historyPeriods: HistoryPeriod[] = ['上古史', '中古史', '近世史', '现代史']
+const importanceLevels: HistoricalImportance[] = ['核心', '重要', '补充']
 
 interface CharacterEditorDraft {
   character: Character
@@ -51,7 +53,18 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
   const openedInitialId = useRef<string | undefined>(undefined)
   const [scopeFilter, setScopeFilter] = useState<'all' | 'independent' | 'exclusive' | 'shared' | `novel:${string}`>('all')
   const [stageFilter, setStageFilter] = useState<'all' | ResourceStage>('all')
+  const [periodFilter, setPeriodFilter] = useState<'all' | HistoryPeriod>('all')
+  const [polityFilter, setPolityFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [domainFilter, setDomainFilter] = useState('all')
+  const [importanceFilter, setImportanceFilter] = useState<'all' | HistoricalImportance>('all')
   const novels = project.novels ?? []
+  const historicalCharacters = project.characters.filter((character) => character.historical)
+  const historyOptions = {
+    polity: Array.from(new Set(historicalCharacters.flatMap((character) => character.historical?.polity ?? []))).sort(),
+    type: Array.from(new Set(historicalCharacters.flatMap((character) => character.historical?.types ?? []))).sort(),
+    domain: Array.from(new Set(historicalCharacters.flatMap((character) => character.historical?.domains ?? []))).sort(),
+  }
   const newDrafts = listEditorDrafts<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE).filter((draft) => draft.value?.character && !project.characters.some((character) => character.id === draft.id))
 
   useEffect(() => {
@@ -71,14 +84,20 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
   }, [initialCharacterId, novels, project.characters])
 
   const characters = useMemo(() => project.characters.filter((character) => {
-    const matchesQuery = `${character.name}${character.alias}${character.role}${character.faction}`.toLowerCase().includes(query.toLowerCase())
+    const matchesQuery = `${character.name}${character.alias}${character.role}${character.faction}${character.historical?.era ?? ''}${character.historical?.domains.join('') ?? ''}`.toLowerCase().includes(query.toLowerCase())
     const matchesFilter = filter === 'all' || character.visibility === filter
     const linkedNovelIds = getLinkedNovelIds(novels, 'character', character.id)
     const scope = getResourceScope(linkedNovelIds)
     const scopeMatches = scopeFilter === 'all' || scopeFilter === scope || (scopeFilter.startsWith('novel:') && linkedNovelIds.includes(scopeFilter.slice(6)))
     const stageMatches = stageFilter === 'all' || character.stage === stageFilter
-    return matchesQuery && matchesFilter && scopeMatches && stageMatches
-  }), [filter, novels, project.characters, query, scopeFilter, stageFilter])
+    const history = character.historical
+    const periodMatches = periodFilter === 'all' || history?.periods.includes(periodFilter)
+    const polityMatches = polityFilter === 'all' || history?.polity.includes(polityFilter)
+    const typeMatches = typeFilter === 'all' || history?.types.includes(typeFilter)
+    const domainMatches = domainFilter === 'all' || history?.domains.includes(domainFilter)
+    const importanceMatches = importanceFilter === 'all' || history?.importance === importanceFilter
+    return matchesQuery && matchesFilter && scopeMatches && stageMatches && periodMatches && polityMatches && typeMatches && domainMatches && importanceMatches
+  }), [domainFilter, filter, importanceFilter, novels, periodFilter, polityFilter, project.characters, query, scopeFilter, stageFilter, typeFilter])
 
   function openEditor(character: Character) {
     const draft = loadEditorDraft<CharacterEditorDraft>(CHARACTER_DRAFT_SCOPE, character.id)
@@ -157,6 +176,12 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
       <section className="resource-filter-bar">
         <label>归属<select value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}><option value="all">全部范围</option><option value="independent">独立资料</option><option value="exclusive">小说专属</option><option value="shared">多作品共享</option>{novels.map((novel) => <option key={novel.id} value={`novel:${novel.id}`}>《{novel.title}》</option>)}</select></label>
         <label>阶段<select value={stageFilter} onChange={(event) => setStageFilter(event.target.value as typeof stageFilter)}><option value="all">全部阶段</option>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>分期<select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value as typeof periodFilter)}><option value="all">全部分期</option>{historyPeriods.map((period) => <option key={period} value={period}>{period}</option>)}</select></label>
+        <label>政权<select value={polityFilter} onChange={(event) => setPolityFilter(event.target.value)}><option value="all">全部政权</option>{historyOptions.polity.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>类型<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">全部类型</option>{historyOptions.type.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>领域<select value={domainFilter} onChange={(event) => setDomainFilter(event.target.value)}><option value="all">全部领域</option>{historyOptions.domain.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <label>重要度<select value={importanceFilter} onChange={(event) => setImportanceFilter(event.target.value as typeof importanceFilter)}><option value="all">全部级别</option>{importanceLevels.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        <span className="filter-result-count">显示 {characters.length} / {project.characters.length}</span>
       </section>
 
       {newDrafts.length > 0 && <section className="setting-draft-list"><span>未保存的新角色</span>{newDrafts.map((draft) => <button key={draft.id} className="ghost-button" onClick={() => openEditor(draft.value.character)}>继续草稿：{draft.value.character.name}</button>)}</section>}
@@ -172,6 +197,7 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
               <div className="character-card-body">
                 <div className="character-name-row"><h3>{character.name}</h3><VisibilityBadge value={character.visibility} /></div>
                 <p className="character-role">{character.role}</p>
+                {character.historical && <div className="history-meta-row"><span>{character.historical.periods.join(' · ')}</span><span>{character.historical.importance}</span></div>}
                 <ResourceMetaBadges stage={character.stage} novelIds={getLinkedNovelIds(novels, 'character', character.id)} novels={novels} />
                 <p className="character-description">{character.personality || '还没有填写角色性格。'}</p>
                 <div className="character-meta"><span><Shield size={13} /> {character.faction}</span><span>{relationshipCount} 条关系</span></div>
@@ -206,6 +232,7 @@ export function CharactersView({ project, onChange, onOpenGraph, initialCharacte
               <label>年龄<input value={editing.age} onChange={(event) => setEditing({ ...editing, age: event.target.value })} /></label>
               <label>识别色<input type="color" value={editing.color} onChange={(event) => setEditing({ ...editing, color: event.target.value })} /></label>
               <label>内容阶段<select value={editing.stage} onChange={(event) => setEditing({ ...editing, stage: event.target.value as ResourceStage })}>{Object.entries(stageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              {editing.historical && <><label>历史分期<input value={editing.historical.periods.join('、')} readOnly /></label><label>重要度<select value={editing.historical.importance} onChange={(event) => setEditing({ ...editing, historical: { ...editing.historical!, importance: event.target.value as HistoricalImportance } })}>{importanceLevels.map((value) => <option key={value}>{value}</option>)}</select></label><label>历史时期<input value={editing.historical.era} onChange={(event) => setEditing({ ...editing, age: event.target.value, historical: { ...editing.historical!, era: event.target.value } })} /></label><label>人物类型<input value={editing.historical.types.join('、')} readOnly /></label><label>历史领域<input value={editing.historical.domains.join('、')} readOnly /></label></>}
             </div>
             <div className="form-stack character-writing">
               <label className="form-wide">外貌<textarea rows={3} value={editing.appearance} onChange={(event) => setEditing({ ...editing, appearance: event.target.value })} /></label>
